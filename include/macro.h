@@ -4,7 +4,7 @@
 #include "../config.h"
 
 // CP^(N-1) Models number of colors N
-#define N 2
+#define N 5
 
 // smallest number
 static const double NUM_EPS=1.0e-15;

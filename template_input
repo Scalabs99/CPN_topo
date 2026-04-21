@@ -1,16 +1,16 @@
 # theory parameters
-size   50 50    # L_t L_x
+size   10 10    # L_t L_x
 beta   1.0      # bare inverse coupling
 theta  0.0      # bare imaginary theta
 
 # simulation details
-num_MC_step      100    # number of updating steps
-meas_every       10     # perform measures every <meas_every> steps
+num_MC_step      100000    # number of updating steps
+meas_every       1     # perform measures every <meas_every> steps
 num_micro        4      # number of over-relaxation steps (microcanonical steps) for every over-heat-bath step
 num_norm         3      # normalize fields every <num_norm> steps
 save_conf_every  50     # save conf for backup every <save_conf_every> steps
 
-start 0                 # initialize conf: 0=random cold, 1=random hot, 2=start from saved conf
+start 1                 # initialize conf: 0=random cold, 1=random hot, 2=start from saved conf
 
 num_cool_step    50     # number of cooling steps 
 meas_cool_every  5      # perform measures every <meas_cool_every> cool steps
@@ -26,7 +26,7 @@ hierarc_upd  0    # number of hierarchic update __ rectangle sizes for each hera
 # multicanonic parameters
 grid_step 1                      # topo potential is defined on a grid with step <grid_step>
 grid_max 100                     # topo potential is defined for Q € [ -<grid_max>, <grid_max> ], outside is just taken constant
-num_smooth_step 0                # number of smoothing steps to define topo charge in topo potential
+# num_smooth_step 0                # number of smoothing steps to define topo charge in topo potential
 num_single_site_stoc_upd 2500    # number of stochastic single sites updates
 
 # file names

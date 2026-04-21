@@ -23,5 +23,5 @@ sed "s/${aux}/#define N ${CPN_NCOLORS}/g" include/macro.h > temp
 mv temp include/macro.h
 
 # compile code
-./configure CFLAGS='-O3' #CC=icc CFLAGS='-O3 -axCORE-AVX512 -mtune=skylake -ip -ipo' LIBS="-ldl -lz -lc"
+./configure CFLAGS='-O3 -I/opt/homebrew/opt/openssl/include -Wno-deprecated-declarations' LDFLAGS='-L/opt/homebrew/opt/openssl/lib' #CC=icc CFLAGS='-O3 -axCORE-AVX512 -mtune=skylake -ip -ipo' LIBS="-ldl -lz -lc"
 make ${TARGET_EXEC} #-j 18
