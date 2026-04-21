@@ -15,3 +15,5 @@ rm -f ${topo_filename}
 for x in $(seq -${grid_max} ${grid_step} ${grid_max}); do
 	awk -v x=${x} 'BEGIN{ printf "%.5lf %.18lf\n", x, -2.0*i  }' >> ${topo_filename}
 done
+
+# test
