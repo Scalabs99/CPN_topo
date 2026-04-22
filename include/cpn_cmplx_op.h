@@ -174,6 +174,7 @@ inline double arg(cmplx const z)
 	return atan2(y,x);
 }
 
+
 // complex random
 
 inline cmplx cmplx_rand_num(RNG_Param *rng_state)

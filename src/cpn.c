@@ -57,6 +57,9 @@ void real_main(char *input_file_name)
 
 	// initialize swap acceptances array
 	init_swap_acceptances(&swap_counter, &param);
+        
+        // initialize omega matrix 
+        init_twisted_phases(); 
 
  	// Monte Carlo begins
 	time(&start_date);

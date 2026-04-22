@@ -26,4 +26,11 @@ static const double c2=(-1.0/12.0);
 // to activate posix_memalign in stdlib.h
 #define _POSIX_C_SOURCE 200809L
 
+// Global arrays for the twisted phases 
+extern cmplx omega_phases[N];
+extern cmplx omega_dagger_phases[N];
+
+// function to initialize the phases 
+void init_twisted_phases(void);
+
 #endif

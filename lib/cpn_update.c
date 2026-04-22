@@ -5,6 +5,52 @@
 
 // perform a single step of Hasenbusch parallel tempering with hierarchic updates and translations
 // Adapted from "Fighting topological freezing in the two-dimensional CP^{N-1} model", M. Hasenbusch, Phys. Rev. D 96, 054504 (2017), 1706.04443
+
+// Array that contain the phases; 
+cmplx omega_phases[N] __attribute__((aligned(DOUBLE_ALIGN)));
+cmplx omega_dagger_phases[N] __attribute__((aligned(DOUBLE_ALIGN)));
+
+// This function computes the phases once and for all 
+void init_twisted_phases(void) 
+{
+    int k;
+    double phase;
+    double inv_N = 1.0 / (double)N; // Ottimizzazione della divisione
+    
+    for(k = 0; k < N; k++) 
+    {
+        phase = 2.0 * pi * (double)k * inv_N;
+        omega_phases[k] = cexp(I * phase);
+        omega_dagger_phases[k] = conj(omega_phases[k]); 
+    }
+}
+
+
+// Multiply by Omega looking forward 
+static inline void omega_forwd(cmplx const * const z_in, cmplx * z_out)
+{
+        int k; 
+        for (k=0; k<N; k++)
+        {
+                z_out[k] = z_in[k] * omega_phases[k]; 
+
+        } 
+
+}
+
+// Multiply by Omega dagger looking backward 
+static inline void omega_backwd(cmplx const * const z_in, cmplx * z_out)
+{
+        int k; 
+        for (k=0; k<N; k++)
+        {
+               
+                z_out[k] = z_in[k] * omega_dagger_phases[k]; 
+
+        } 
+
+}
+
 void parallel_tempering_with_hierarchic_update(CPN_Conf * conf, Rectangle const * const most_update, Acc_Swap *swap_counter, CPN_Param const * const param,
 												Geometry const * const geo, CPN_Conf *aux_conf, RNG_Param *rng_state)
 {
@@ -37,8 +83,8 @@ void hierarchic_update_rectangle(CPN_Conf * conf, Geometry const * const geo, CP
 	if(hierarc_level==((param->d_N_hierarc_levels)-1))
 	{
 		for(j=0;j<param->d_N_sweep_rect[hierarc_level];j++) 
-		{
-			update_rectangle(&(conf[conf_label]), geo, param, &(most_update[hierarc_level]), rng_state);
+	       	{
+		       	update_rectangle(&(conf[conf_label]), geo, param, &(most_update[hierarc_level]), rng_state);
 			if(param->d_N_replica_pt>1) swap(conf, param, swap_counter, rng_state);
 			conf_translation(&(conf[0]), geo, param, aux_conf, rng_state);
 		}
@@ -125,24 +171,71 @@ void force_z(CPN_Conf const * const conf, Geometry const * const geo, long i, cm
 	vector_zero(x2);  // x2=0
 	for(mu=0; mu<2; mu++)
 	{	
-		// contribution from first term of Symanzik-improved action
+	       	// contribution from first term of Symanzik-improved action
+                // We add twisted boundary conditions 
+                long x_0 = i % param->d_size[0];
+                // Initialize two pointers pointing to the standard neighbors 
+                cmplx *z_up_ptr = conf->z[geo->up[i][mu]];
+                cmplx *z_dn_ptr = conf->z[geo->dn[i][mu]];
+                // Initialize two pointers pointing to next to nearest neighbors 
+                cmplx *z_2up_ptr = conf->z[geo->up[geo->up[i][mu]][mu]]; 
+                cmplx *z_2dn_ptr = conf->z[geo->dn[geo->dn[i][mu]][mu]]; 
+                // Initialize two buffers containg the twisted z fields 
+                cmplx z_up_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
+                cmplx x_dn_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
+                //check if we are on the time direction of the lattice 
+                if (mu == 0)
+                {
+                       // if x_0=L-1 then we look towards x_0 = 0;
+                       if (x_0 == param->d_size[0])
+                       { 
+                              omega_forwd(z_up_ptr, z_up_twisted); 
+                              z_up_ptr = z_up_twisted; 
+                       }
 
+                       // if x_0 = 0 then we look back at x_0 = L-1; 
+                       if (x_0 == 0)
+                       {
+                              omega_backwd(z_dn_ptr, z_dn_twisted);
+                              z_dn_ptr = z_dn_twisted; 
+                       }
+
+                }
 		// coeff1 = ( C*conj(U) )(i-mu)_mu
 		coeff1=conf->C[geo->dn[i][mu]][mu] * conj(conf->U[geo->dn[i][mu]][mu]);
 		// coeff2 = (C*U)(i)_mu
 		coeff2=conf->C[i][mu] * conf->U[i][mu];
-		// aux = coeff1 * z(i-mu) + coeff2 * x(i+mu)
-		vector_linear_combination_cmplx_coeff(aux, conf->z[geo->dn[i][mu]], conf->z[geo->up[i][mu]], coeff1, coeff2);
+		// aux = coeff1 * z(i-mu) + coeff2 * z(i+mu)
+		vector_linear_combination_cmplx_coeff(aux, z_dn_ptr, z_up_ptr, coeff1, coeff2);
 		vector_sum(x1, aux); // x1 += aux
 
 		// contribution from second term of Symanzik-improved action
+                // We implement again the twisted boundary conditions. Keep in mind 
+                // that we in this term we have next to nearest neighbor interaction 
+                if (mu == 0)
+                {
+                       // if x_0=L-1 or x_0 = L-2 then we look towards x_0 = 0;
+                       if (x_0 == (param->d_size[0]-1) || x_0 == (param->d_size[0]-2))
+                       { 
+                              omega_forwd(z_2up_ptr, z_up_twisted); 
+                              z_2up_ptr = z_up_twisted; 
+                       }
+
+                       // if x_0 = 0 or x_0 = 1 then we look back at x_0 = L-1; 
+                       if (x_0 == 0 || x_0 == 1)
+                       {
+                              omega_backwd(z_2dn_ptr, z_dn_twisted);
+                              z_2dn_ptr = z_dn_twisted; 
+                       }
+
+                }
 
 		// coeff1 = (C*U)(i-2mu)_mu * ( C*conj(U) )(i-mu)_mu
 		coeff1=conf->C[geo->dn[geo->dn[i][mu]][mu]][mu] * conf->C[geo->dn[i][mu]][mu] * conj(conf->U[geo->dn[i][mu]][mu] * conf->U[geo->dn[geo->dn[i][mu]][mu]][mu]);
 		// coeff2 = (C*U)(i)_mu * (C*U)(i+mu)_mu
 		coeff2=conf->C[geo->up[i][mu]][mu] * conf->C[i][mu] * conf->U[i][mu] * conf->U[geo->up[i][mu]][mu];
 		// aux = coeff1  * z(i-2mu) + coeff2 * z(i+2mu)
-		vector_linear_combination_cmplx_coeff(aux, conf->z[geo->dn[geo->dn[i][mu]][mu]], conf->z[geo->up[geo->up[i][mu]][mu]], coeff1, coeff2);
+		vector_linear_combination_cmplx_coeff(aux, z_2dn_ptr, z_2up_ptr, coeff1, coeff2);
 		vector_sum(x2, aux); // x2 +=aux
 	}
 
