@@ -81,7 +81,7 @@ void hierarchic_update_rectangle(CPN_Conf * conf, Geometry const * const geo, CP
 {
 	int j;
 	if(hierarc_level==((param->d_N_hierarc_levels)-1))
-	{
+	{       
 		for(j=0;j<param->d_N_sweep_rect[hierarc_level];j++) 
 	       	{
 		       	update_rectangle(&(conf[conf_label]), geo, param, &(most_update[hierarc_level]), rng_state);
@@ -136,11 +136,46 @@ cmplx force_U(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param
 {
 	double sign;
 	cmplx a, b, c, F_topo;
+        long x_0 = i % param->d_size[0]
+        // Initialize pointers 
+        cmplx * z_up_ptr = conf->z[geo->up[i][mu]]; 
+        cmplx * z_2up_ptr = conf->z[geo->up[geo->up[i][mu]][mu]];
+        cmplx * z_dn_ptr = conf->z[geo->dn[i][mu]
+        // Initialize two buffers containg the twisted z fields 
+        cmplx z_up_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
+        cmplx x_2up_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
+        cmplx z_dn_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
 
-	// non-topological contributions to the force
-	a=vector_scalar_product(conf->z[ geo->up[i][mu]], conf->z[i]);
-	b=vector_scalar_product(conf->z[ geo->up[ geo->up[i][mu] ][mu]], conf->z[i]);
-	c=vector_scalar_product(conf->z[ geo->up[i][mu] ], conf->z[ geo->dn[i][mu] ]);
+        if (mu == 0) 
+        {       
+                if (x_0 == 0)   
+                {
+                        omega_backwd(z_dn_ptr, z_dn_twisted);
+                        z_dn_ptr = z_dn_twisted; 
+                }
+
+                if (x_0 == (param->d_size[0]-1)) 
+                {
+                        omega_forwd(z_2up_ptr, z_2up_twisted);
+                        z_2up_ptr = z_2up_twisted; 
+     
+                }
+
+                if (x_0 == param->d_size[0])
+                {
+                        omega_fowd(z_up_ptr, z_up_twisted);
+                        z_up_ptr = z_up_twisted; 
+                        omega_fowd(z_2up_ptr, z_2up_twisted);
+                        z_2up_ptr = z_2up_twisted;  
+
+                }               
+
+        }
+        
+        // non-topological contributions to the force
+	a=vector_scalar_product(z_up_ptr, conf->z[i]);
+	b=vector_scalar_product(z_2up_ptr, conf->z[i]);
+	c=vector_scalar_product(z_up_ptr, z_dn_ptr);
 
 	a *= conf->C[i][mu];
 	b *= conf->C[i][mu] * conf->C[geo->up[i][mu]][mu] * conj(conf->U[geo->up[i][mu]][mu]);
@@ -171,8 +206,9 @@ void force_z(CPN_Conf const * const conf, Geometry const * const geo, long i, cm
 	vector_zero(x2);  // x2=0
 	for(mu=0; mu<2; mu++)
 	{	
-	       	// contribution from first term of Symanzik-improved action
-                // We add twisted boundary conditions 
+	        // contribution from first term of Symanzik-improved action
+                // We add twisted boundary conditions. 
+                // First we compute the time coordinate of the lattice point we are considering;  
                 long x_0 = i % param->d_size[0];
                 // Initialize two pointers pointing to the standard neighbors 
                 cmplx *z_up_ptr = conf->z[geo->up[i][mu]];
