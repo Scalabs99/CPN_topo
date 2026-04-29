@@ -26,7 +26,7 @@ hierarc_upd  0    # number of hierarchic update __ rectangle sizes for each hera
 # multicanonic parameters
 grid_step 1                      # topo potential is defined on a grid with step <grid_step>
 grid_max 100                     # topo potential is defined for Q € [ -<grid_max>, <grid_max> ], outside is just taken constant
-num_smooth_step 0                # number of smoothing steps to define topo charge in topo potential
+# num_smooth_step 0                # number of smoothing steps to define topo charge in topo potential
 num_single_site_stoc_upd 2500    # number of stochastic single sites updates
 
 # file names

@@ -72,11 +72,11 @@ void update_with_defect(CPN_Conf *, Geometry const * const, CPN_Param const * co
 cmplx staple_up(CPN_Conf const * const, Geometry const * const, long const, int);
 cmplx staple_down(CPN_Conf const * const, Geometry const * const, long const, int);
 cmplx force_U(CPN_Conf const * const, Geometry const * const, CPN_Param const * const, long const, int const); 
-void force_z(CPN_Conf const * const, Geometry const * const, long const, cmplx *); 
+void force_z(CPN_Conf const * const, CPN_Param const * const, Geometry const * const, long const, cmplx *); 
 void microcanonic_sweep_rectangle(CPN_Conf *, Geometry const * const, CPN_Param const * const, Rectangle const * const);
 void microcanonic_sweep_lattice(CPN_Conf *, Geometry const * const, CPN_Param const * const);
 void microcanonic_single_link_U(CPN_Conf *, Geometry const * const, CPN_Param const * const, long const, int const);
-void microcanonic_single_site_z(CPN_Conf *, Geometry const * const, long const);
+void microcanonic_single_site_z(CPN_Conf *, CPN_Param const * const, Geometry const * const, long const);
 void overheatbath_sweep_rectangle(CPN_Conf *, Geometry const * const, CPN_Param const * const, Rectangle const * const, RNG_Param *);
 void overheatbath_sweep_lattice(CPN_Conf *, Geometry const * const, CPN_Param const * const, RNG_Param *); 
 void overheatbath_single_link_U(CPN_Conf *, Geometry const * const, CPN_Param const * const, long const, int const, RNG_Param *);

@@ -136,14 +136,14 @@ cmplx force_U(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param
 {
 	double sign;
 	cmplx a, b, c, F_topo;
-        long x_0 = i % param->d_size[0]
+        long x_0 = i % param->d_size[0];
         // Initialize pointers 
         cmplx * z_up_ptr = conf->z[geo->up[i][mu]]; 
         cmplx * z_2up_ptr = conf->z[geo->up[geo->up[i][mu]][mu]];
-        cmplx * z_dn_ptr = conf->z[geo->dn[i][mu]
+        cmplx * z_dn_ptr = conf->z[geo->dn[i][mu]];
         // Initialize two buffers containg the twisted z fields 
         cmplx z_up_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
-        cmplx x_2up_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
+        cmplx z_2up_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
         cmplx z_dn_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
 
         if (mu == 0) 
@@ -163,9 +163,9 @@ cmplx force_U(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param
 
                 if (x_0 == param->d_size[0])
                 {
-                        omega_fowd(z_up_ptr, z_up_twisted);
+                        omega_forwd(z_up_ptr, z_up_twisted);
                         z_up_ptr = z_up_twisted; 
-                        omega_fowd(z_2up_ptr, z_2up_twisted);
+                        omega_forwd(z_2up_ptr, z_2up_twisted);
                         z_2up_ptr = z_2up_twisted;  
 
                 }               
@@ -193,7 +193,7 @@ cmplx force_U(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param
 
 
 // compute F_z = dS/dz relative to field z on site i
-void force_z(CPN_Conf const * const conf, Geometry const * const geo, long i, cmplx *F_z) 
+void force_z(CPN_Conf const * const conf, CPN_Param const * const param, Geometry const * const geo, long i, cmplx *F_z) 
 {
 	int mu;
 	cmplx coeff1, coeff2;
@@ -218,7 +218,7 @@ void force_z(CPN_Conf const * const conf, Geometry const * const geo, long i, cm
                 cmplx *z_2dn_ptr = conf->z[geo->dn[geo->dn[i][mu]][mu]]; 
                 // Initialize two buffers containg the twisted z fields 
                 cmplx z_up_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
-                cmplx x_dn_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
+                cmplx z_dn_twisted[N] __attribute__((aligned(DOUBLE_ALIGN))); 
                 //check if we are on the time direction of the lattice 
                 if (mu == 0)
                 {
@@ -290,7 +290,7 @@ void microcanonic_sweep_rectangle(CPN_Conf * conf, Geometry const * const geo, C
 	{
 		n=most_update->rect_sites[i];
 		for (mu=0; mu<2; mu++) microcanonic_single_link_U(conf, geo, param, n, mu);
-		microcanonic_single_site_z(conf, geo, n);
+		microcanonic_single_site_z(conf, param, geo, n);
 	}
 }	
 
@@ -301,7 +301,7 @@ void microcanonic_sweep_lattice(CPN_Conf * conf, Geometry const * const geo, CPN
 	for (i=0; i<param->d_volume ; i++)
 	{
 		for (mu=0; mu<2; mu++) microcanonic_single_link_U(conf, geo, param, i, mu);
-		microcanonic_single_site_z(conf, geo, i); 
+		microcanonic_single_site_z(conf, param, geo, i); 
 	}
 }
 
@@ -323,13 +323,13 @@ void microcanonic_single_link_U(CPN_Conf * conf, Geometry const * const geo, CPN
 }
 
 // over-relaxation of field z on site i
-void microcanonic_single_site_z(CPN_Conf * conf, Geometry const * const geo, long const i) 
+void microcanonic_single_site_z(CPN_Conf * conf, CPN_Param const * const param, Geometry const * const geo, long const i) 
 {
 	double p, mod_F_z, b; 
 	cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
 	cmplx a;
 
-	force_z(conf, geo, i, F_z);
+	force_z(conf, param, geo, i, F_z);
 	a=vector_scalar_product(conf->z[i], F_z); // project z along F_z for site i
 	p = creal(a);
 	mod_F_z = vector_norm(F_z); // |F_z|^2
@@ -401,7 +401,7 @@ void overheatbath_single_site_z(CPN_Conf * conf, Geometry const * const geo, CPN
 	cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
 	cmplx a0;
 
-	force_z(conf, geo, i, F_z);
+	force_z(conf, param, geo, i, F_z);
 	mod_F_z = vector_abs(F_z); // |F_z|
 	a0=vector_scalar_product(conf->z[i], F_z); // project z along F_z on site i
 	cos_theta_old = creal(a0) / mod_F_z; // Re( \conj(z) F_z )/|F_z| = cos(theta_old)

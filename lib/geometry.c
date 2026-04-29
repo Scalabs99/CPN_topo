@@ -57,7 +57,7 @@ void init_geometry(Geometry * geo, CPN_Param const * const param)
 
 			// down near-neighbor
 			aux=value-1;
-			if(aux < 0) aux+=param->d_size[i];
+			if(aux < 0) aux+=param->d_size[mu];
 			cart_coord[mu]=aux;
 			aux=cart_to_si(cart_coord, param);
 			geo->dn[i][mu]=aux;
