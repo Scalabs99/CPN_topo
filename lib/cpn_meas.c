@@ -252,30 +252,30 @@ void cooling (CPN_Conf *conf, Geometry const * const geo, CPN_Param const * cons
 cmplx compute_Polyakov(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param const * const param)
 {
         
-        cmplx Pol = 0.0; // spatially averaged Polyakov loop
-        Lx = param->d_size[1]; 
-        Lt = param->d_size[0]; 
+    cmplx Pol = 0.0; // spatially averaged Polyakov loop
+    Lx = param->d_size[1]; 
+    Lt = param->d_size[0]; 
        
-        long i, j, r; 
-        for (i=0; i<Lx; i++)
-        {       
-                cmplx temp = 1.0; // initialize temp = 1 + 0i; 
-                long cart_coord[2] = {0, i}; 
-                r = cart_to_si(cart_coord, param); 
+    long i, j, r; 
+    for (i=0; i<Lx; i++)
+    {       
+        cmplx temp = 1.0; // initialize temp = 1 + 0i; 
+        long cart_coord[2] = {0, i}; 
+        r = cart_to_si(cart_coord, param); 
                 
-                for (j=0; j<Lt; j++)
-                {
-                        temp *= conf->U[r][0];    
-                        r = geo->up[r][0]; // jump to the next site ( in the 0 direction ) 
+        for (j=0; j<Lt; j++)
+        {
+             temp *= conf->U[r][0];    
+             r = geo->up[r][0]; // jump to the next site ( in the 0 direction ) 
                     
-                } 
+        } 
                 
-                Pol += temp; 
+        Pol += temp; 
           
-        }
+    }
       
-        Pol = Pol / Lx; 
-        return Pol; 
+    Pol = Pol / Lx; 
+    return Pol; 
 }  
 
 #endif
