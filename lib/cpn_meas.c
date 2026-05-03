@@ -24,8 +24,8 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 	// compute topological observables of hot configuration
 	for (i=0; i<3; i++) // 1=geometric charge U, 2=geometric charge z, 3=non-geometric plaquette charge
 	{
-	Q[i] = topo_charge(conf, geo, param, i); // compute topological charge using i^th discretization
-	chi_p[i] = chi_prime(conf, geo, param, i); // compute chi' using i^th discretization
+	        Q[i] = topo_charge(conf, geo, param, i); // compute topological charge using i^th discretization
+	        chi_p[i] = chi_prime(conf, geo, param, i); // compute chi' using i^th discretization
 	}	
 	// print topological observable of hot configuration
 	fprintf(topofilep, "%ld %d", conf->update_index, cool_step);
