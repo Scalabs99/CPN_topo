@@ -61,6 +61,7 @@ double topo_charge(CPN_Conf const * const, Geometry const * const, CPN_Param con
 double chi_prime(CPN_Conf const * const, Geometry const * const, CPN_Param const * const, int const);
 void magnetic_susceptibility(CPN_Conf const * const, CPN_Param const * const, double *); 
 void cooling(CPN_Conf *, Geometry const * const, CPN_Param const * const);
+cmplx compute_Polyakov(CPN_Conf const * const, Geometry const * const, CPN_Param const * const); 
 
 // in lib/cpn_update.c
 void parallel_tempering_with_hierarchic_update(CPN_Conf *, Rectangle const * const, Acc_Swap *,

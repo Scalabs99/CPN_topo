@@ -11,11 +11,14 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 	int cool_step=0, i;
 	double magn_susc[2], Q[3], chi_p[3];
 	double energy;
+        cmplx Pol_loop; // Polyakov loop; 
 
 	energy=energy_density(conf, geo, param);
 	magnetic_susceptibility(conf, param, magn_susc);
+        Pol_loop = compute_Polyakov(conf, geo, param); 
+        
 
-	fprintf(datafilep, "%ld %.16lf %.16lf %.16lf\n", conf->update_index, energy, magn_susc[0], magn_susc[1]);
+	fprintf(datafilep, "%ld %.16lf %.16lf %.16lf %.16lf %.16lf\n", conf->update_index, energy, magn_susc[0], magn_susc[1], creal(Pol_loop), cimag(Pol_loop)); 
 	fflush(datafilep);
 
 	// compute topological observables of hot configuration
@@ -38,7 +41,7 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 
 	// perform cooling on aux_conf
 	for (cool_step=1; cool_step<(param->d_coolsteps+1); cool_step++) 
-    { 
+        { 
 		cooling(aux_conf, geo, param); // perform 1 cooling step
 		if ( ( cool_step % param->d_coolevery ) == 0 ) // perform measures on cooled conf
 		{ 
@@ -244,5 +247,35 @@ void cooling (CPN_Conf *conf, Geometry const * const geo, CPN_Param const * cons
 		vector_equal(conf->z[i], F_z); // align z along the local force on site i: z = F_z/|F_z|
 	}
 }
+
+// compute the spatially averaged Polyakov loop; 
+cmplx compute_Polyakov(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param const * const param)
+{
+        
+        cmplx Pol = 0.0; // spatially averaged Polyakov loop
+        Lx = param->d_size[1]; 
+        Lt = param->d_size[0]; 
+       
+        long i, j, r; 
+        for (i=0; i<Lx; i++)
+        {       
+                cmplx temp = 1.0; // initialize temp = 1 + 0i; 
+                long cart_coord[2] = {0, i}; 
+                r = cart_to_si(cart_coord, param); 
+                
+                for (j=0; j<Lt; j++)
+                {
+                        temp *= conf->U[r][0];    
+                        r = geo->up[r][0]; // jump to the next site ( in the 0 direction ) 
+                    
+                } 
+                
+                Pol += temp; 
+          
+        }
+      
+        Pol = Pol / Lx; 
+        return Pol; 
+}  
 
 #endif
