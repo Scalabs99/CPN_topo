@@ -11,11 +11,11 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 	int cool_step=0, i;
 	double magn_susc[2], Q[3], chi_p[3];
 	double energy;
-        cmplx Pol_loop; // Polyakov loop; 
+    cmplx Pol_loop; // Polyakov loop; 
 
 	energy=energy_density(conf, geo, param);
 	magnetic_susceptibility(conf, param, magn_susc);
-        Pol_loop = compute_Polyakov(conf, geo, param); 
+    Pol_loop = compute_Polyakov(conf, geo, param); 
         
 
 	fprintf(datafilep, "%ld %.16lf %.16lf %.16lf %.16lf %.16lf\n", conf->update_index, energy, magn_susc[0], magn_susc[1], creal(Pol_loop), cimag(Pol_loop)); 
