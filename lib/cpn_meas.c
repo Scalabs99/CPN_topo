@@ -253,8 +253,8 @@ cmplx compute_Polyakov(CPN_Conf const * const conf, Geometry const * const geo, 
 {
         
     cmplx Pol = 0.0; // spatially averaged Polyakov loop
-    Lx = param->d_size[1]; 
-    Lt = param->d_size[0]; 
+    int Lx = param->d_size[1]; 
+    int Lt = param->d_size[0]; 
        
     long i, j, r; 
     for (i=0; i<Lx; i++)
