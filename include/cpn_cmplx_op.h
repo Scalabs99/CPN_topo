@@ -71,6 +71,25 @@ inline void vector_linear_combination_cmplx_coeff(cmplx *res, cmplx const * cons
 	}
 }
 
+// res = a*Av + b*Bw with a,b complex and A,B complex N*N diagonal matrices; 
+inline void vector_linear_combination_cmplx_coeff_matrix(cmplx *res, cmplx const * const v, cmplx const * const w, cmplx const a, cmplx const b
+                                                  cmplx const * const A, cmplx const * const B)
+{
+	#ifdef __INTEL_COMPILER
+	__assume_aligned(&(res), DOUBLE_ALIGN);
+	__assume_aligned(&(v), DOUBLE_ALIGN);
+	__assume_aligned(&(w), DOUBLE_ALIGN);
+        __assume_aligned(&(A), DOUBLE_ALIGN);
+        __assume_aligned(&(B), DOUBLE_ALIGN); 
+	#endif
+
+	int i;
+	for (i=0; i<N; i++)
+	{
+		res[i] = a*(A[i]*v[i]) + b*(B[i]*w[i]);
+	}
+}
+
 // v = a*v + b*w with a,b real
 inline void vector_linear_combination_real_coeff(cmplx *v, cmplx const * const w, double const a, double const b)
 {
@@ -99,6 +118,25 @@ inline cmplx vector_scalar_product(cmplx const * const v, cmplx const * const w)
 	for( i=0 ; i<N ; i++)
 	{
 		res += conj(v[i]) * w[i];
+	}
+
+  return res;
+}
+
+// res = (v,w) = conj(v) \dot Aw = sum_{i=1}^{N} conj(v)[i] (Aw)[i]
+inline cmplx vector_scalar_product_matrix(cmplx const * const v, cmplx const * const w, cmplx const * const A)
+{
+	#ifdef __INTEL_COMPILER
+	__assume_aligned(&(v), DOUBLE_ALIGN);
+	__assume_aligned(&(w), DOUBLE_ALIGN);
+        __assume_aligned(&(A), DOUBLE_ALIGN); 
+	#endif
+
+	int i;
+	cmplx res = 0.0 + I * 0.0;
+	for( i=0 ; i<N ; i++)
+	{
+		res += conj(v[i]) * (A[i] * w[i]);
 	}
 
   return res;
