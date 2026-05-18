@@ -22,6 +22,10 @@ typedef struct CPN_Conf {
 	double **C;       // C[space-time volume][space-time-dimension=2], this factor changes the boundary condition for the links crossing the defect
 	int conf_label;   // stores the label of the replica to keep track of the swaps
 
+        // for the twisted boundary conditions 
+        cmplx *** M1; // M1[spacetime volume][spacetime dir][N] matrix to implement the twist for nn
+        cmplx *** M2; // M2[spacetime volume][spacetime dir][N] matrix to implement the twist fot next to nn
+
 } CPN_Conf;
 
 // Hasenbusch parallel tempering swap struct, stores the accepted swaps and the total swaps proposed during Hasenbusch parallel tempering
@@ -46,6 +50,7 @@ void write_replicas_backup(CPN_Conf const * const, CPN_Param const * const);
 void write_CPN_conf_on_file(CPN_Conf const * const, CPN_Param const * const, char const * const);
 void read_CPN_conf_from_file(CPN_Conf *, CPN_Param const * const, char const * const);
 void compute_MD5_hash_conf(char *, CPN_Conf const * const, CPN_Param const * const);
+void init_twist_matrices(CPN_Conf *, CPN_Param const * const); 
 void free_CPN_replicas(CPN_Conf *, CPN_Param const * const);
 void free_bound_cond(CPN_Conf *, CPN_Param const * const);
 void free_CPN_conf(CPN_Conf *, CPN_Param const * const);
