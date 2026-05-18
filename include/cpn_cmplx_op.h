@@ -72,8 +72,7 @@ inline void vector_linear_combination_cmplx_coeff(cmplx *res, cmplx const * cons
 }
 
 // res = a*Av + b*Bw with a,b complex and A,B complex N*N diagonal matrices; 
-inline void vector_linear_combination_cmplx_coeff_matrix(cmplx *res, cmplx const * const v, cmplx const * const w, cmplx const a, cmplx const b
-                                                  cmplx const * const A, cmplx const * const B)
+inline void vector_linear_combination_cmplx_coeff_matrix(cmplx *res, cmplx const * const v, cmplx const * const w, cmplx const a, cmplx const b, cmplx const * const A, cmplx const * const B)
 {
 	#ifdef __INTEL_COMPILER
 	__assume_aligned(&(res), DOUBLE_ALIGN);
