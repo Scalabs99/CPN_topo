@@ -66,77 +66,7 @@ void init_geometry(Geometry * geo, CPN_Param const * const param)
 		} 
 	}
 }
-
-void init_twist_matrices(Geometry * geo, CPN_Param const * const param)
-{
-        int mu, err; 
-        long i, k; 
-        long Lt = param->d_size[0]; 
-        
-        // allocate memory for the M and L matrices 
-        err=posix_memalign((void**)&(geo->M), (size_t)DOUBLE_ALIGN, (size_t) param->d_volume * sizeof(cmplx **)); 
-        if(err!=0)
-	{
-	    fprintf(stderr, "Problems in allocating the M matrix! (%s, %d)\n", __FILE__, __LINE__);
-	    exit(EXIT_FAILURE);
-	}
-        err=posix_memalign((void**)&(geo->L), (size_t)DOUBLE_ALIGN, (size_t) param->d_volume * sizeof(cmplx **)); 
-        if(err!=0)
-	{
-	    fprintf(stderr, "Problems in allocating the L matrix! (%s, %d)\n", __FILE__, __LINE__);
-	    exit(EXIT_FAILURE);
-	}
-        
-        for (i = 0; i < param->d_volume; i++) 
-        {
-            // allocate the the second level 
-            err = posix_memalign((void**)&(geo->M[i]), (size_t)DOUBLE_ALIGN, (size_t) 2 * sizeof(cmplx *));
-            err = posix_memalign((void**)&(geo->L[i]), (size_t)DOUBLE_ALIGN, (size_t) 2 * sizeof(cmplx *));
-
-            // allocate the final level 
-            for (mu = 0; mu < 2; mu++) 
-            {
-                // allocate the third level (vector of cmplx number, N colors)
-                err = posix_memalign((void**)&(geo->M[i][mu]), (size_t)DOUBLE_ALIGN, (size_t) N * sizeof(cmplx));
-                err = posix_memalign((void**)&(geo->L[i][mu]), (size_t)DOUBLE_ALIGN, (size_t) N * sizeof(cmplx));
-            }
-        }
-       
-        // initialize the two matrices 
-        for (i=0; i < param->d_volume; i++) 
-        {
-        
-             long x0 = i % Lx; 
-
-             for (mu = 0; mu < 2; mu++) 
-             {
-                  for (k = 0; k < N; k++) 
-                  {
-                       geo->M[i][mu][k] = 1.0 + 0.0 * I;
-                       geo->L[i][mu][k] = 1.0 + 0.0 * I;
-                  }
-             }
-  
-             for(k=0; k<N; k++) 
-             {
-                 phase = 2.0 * pi * (double)k/(double)N;
-                 if(x0==0 || x0==Lt-1)
-                 {
-               
-                       geo->M[i][0][k] = cexp(I * phase);
-                       geo->L[i][0][k] = cexp(I * phase); 
-
-                 }
-                 else if(x0==Lt-2)
-                 {
-                       geo->L[i][0][k] = cexp(I * phase); 
-                 }
-
-             }
-         }
-
-           
-}	
+	
 
 // convert from single index (lexicographic) to cartesian coordinates
 void si_to_cart(long *cart_coord, long r, CPN_Param const * const param)
