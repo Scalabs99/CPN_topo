@@ -24,6 +24,7 @@ void init_CPN_replicas(CPN_Conf **conf, CPN_Param const * const param, RNG_Param
 		init_CPN_conf(&((*conf)[i]), param, conf_file_name, rng_state); // initialize CPN conf
 		init_bound_cond(&((*conf)[i]),i,param); // initialize boundary conditions parameters
 		((*conf)[i]).conf_label=i;
+                init_twist_matrices(&((*conf)[i]), param); 
 	}
 	else
 	{
@@ -38,6 +39,7 @@ void init_CPN_replicas(CPN_Conf **conf, CPN_Param const * const param, RNG_Param
 			init_CPN_conf(&((*conf)[i]), param, conf_file_name, rng_state);
 			init_bound_cond(&((*conf)[i]), i, param);
 			((*conf)[i]).conf_label=i;
+                        init_twist_matrices(&((*conf)[i]), param); 
 		}
 	}
 }
@@ -387,6 +389,77 @@ void compute_MD5_hash_conf(char *hash, CPN_Conf const * const conf, CPN_Param co
 	(void) conf;
 	(void) param;
 	#endif
+}
+
+void init_twist_matrices(CPN_conf * conf, CPN_Param const * const param)
+{
+        int mu, err; 
+        long i, k; 
+        long Lt = param->d_size[0]; 
+        
+        // allocate memory for the M1 and M2 matrices 
+        err=posix_memalign((void**)&(conf->M1), (size_t)DOUBLE_ALIGN, (size_t) param->d_volume * sizeof(cmplx **)); 
+        if(err!=0)
+	{
+	    fprintf(stderr, "Problems in allocating the M1 matrix! (%s, %d)\n", __FILE__, __LINE__);
+	    exit(EXIT_FAILURE);
+	}
+        err=posix_memalign((void**)&(conf->M2), (size_t)DOUBLE_ALIGN, (size_t) param->d_volume * sizeof(cmplx **)); 
+        if(err!=0)
+	{
+	    fprintf(stderr, "Problems in allocating the M2 matrix! (%s, %d)\n", __FILE__, __LINE__);
+	    exit(EXIT_FAILURE);
+	}
+        
+        for (i = 0; i < param->d_volume; i++) 
+        {
+            // allocate the the second level 
+            err = posix_memalign((void**)&(conf->M1[i]), (size_t)DOUBLE_ALIGN, (size_t) 2 * sizeof(cmplx *));
+            err = posix_memalign((void**)&(conf->M2[i]), (size_t)DOUBLE_ALIGN, (size_t) 2 * sizeof(cmplx *));
+
+            // allocate the final level 
+            for (mu = 0; mu < 2; mu++) 
+            {
+                // allocate the third level (vector of cmplx number, N colors)
+                err = posix_memalign((void**)&(conf->M1[i][mu]), (size_t)DOUBLE_ALIGN, (size_t) N * sizeof(cmplx));
+                err = posix_memalign((void**)&(conf->M2[i][mu]), (size_t)DOUBLE_ALIGN, (size_t) N * sizeof(cmplx));
+            }
+        }
+       
+        // initialize the two matrices 
+        for (i=0; i < param->d_volume; i++) 
+        {
+        
+             long x0 = i % Lx; 
+
+             for (mu = 0; mu < 2; mu++) 
+             {
+                  for (k = 0; k < N; k++) 
+                  {
+                       conf->M1[i][mu][k] = 1.0 + 0.0 * I;
+                       conf->M2[i][mu][k] = 1.0 + 0.0 * I;
+                  }
+             }
+  
+             for(k=0; k<N; k++) 
+             {
+                 phase = 2.0 * pi * (double)k/(double)N;
+                 if(x0==0 || x0==Lt-1)
+                 {
+               
+                       conf->M1[i][0][k] = cexp(I * phase);
+                       conf->M2[i][0][k] = cexp(I * phase); 
+
+                 }
+                 else if(x0==Lt-2)
+                 {
+                       conf->M2[i][0][k] = cexp(I * phase); 
+                 }
+
+             }
+         }
+
+           
 }
 
 
