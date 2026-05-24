@@ -85,7 +85,7 @@ inline void vector_linear_combination_cmplx_coeff_matrix(cmplx *res, cmplx const
 	int i;
 	for (i=0; i<N; i++)
 	{
-		res[i] = a*(A[i]*v[i]) + b*(B[i]*w[i]);
+		res[i] = a*(conj(A[i])*v[i]) + b*(B[i]*w[i]);
 	}
 }
 
@@ -135,7 +135,7 @@ inline cmplx vector_scalar_product_matrix(cmplx const * const v, cmplx const * c
 	cmplx res = 0.0 + I * 0.0;
 	for( i=0 ; i<N ; i++)
 	{
-		res += conj(v[i]) * (A[i] * w[i]);
+		res += conj(v[i] * A[i]) * w[i];
 	}
 
   return res;

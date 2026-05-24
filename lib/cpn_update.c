@@ -92,9 +92,9 @@ cmplx force_U(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param
 	cmplx a, b, c, F_topo;
 
 	// non-topological contributions to the force
-	a=vector_scalar_product_matrix(conf->z[geo->up[i][mu]], conf->z[i], conj(conf->M1[i][mu]));
-	b=vector_scalar_product_matrix(conf->z[geo->up[geo->up[i][mu]][mu]], conf->z[i], conj(conf->M2[i][mu]));
-	c=vector_scalar_product_matrix(conf->z[geo->up[i][mu]], conf->z[geo->dn[i][mu]], conj(conf->M2[geo->dn[i][mu]][mu]);
+	a=vector_scalar_product_matrix(conf->z[geo->up[i][mu]], conf->z[i], conf->M1[i][mu]);
+	b=vector_scalar_product_matrix(conf->z[geo->up[geo->up[i][mu]][mu]], conf->z[i], conf->M2[i][mu]);
+	c=vector_scalar_product_matrix(conf->z[geo->up[i][mu]], conf->z[geo->dn[i][mu]], conf->M2[geo->dn[i][mu]][mu]);
 
 	a *= conf->C[i][mu];
 	b *= conf->C[i][mu] * conf->C[geo->up[i][mu]][mu] * conj(conf->U[geo->up[i][mu]][mu]);
@@ -132,7 +132,7 @@ void force_z(CPN_Conf const * const conf, Geometry const * const geo, long i, cm
 		// coeff2 = (C*U)(i)_mu
 		coeff2=conf->C[i][mu] * conf->U[i][mu];
 		// aux = coeff1 * z(i-mu) + coeff2 * z(i+mu)
-		vector_linear_combination_cmplx_coeff_matrix(aux, conf->z[geo->dn[i][mu]], conf->z[geo->up[i][mu]], coeff1, coeff2, conj(conf->M1[geo->dn[i][mu]][mu]), conf->M1[i][mu]);
+		vector_linear_combination_cmplx_coeff_matrix(aux, conf->z[geo->dn[i][mu]], conf->z[geo->up[i][mu]], coeff1, coeff2, conf->M1[geo->dn[i][mu]][mu], conf->M1[i][mu]);
 		vector_sum(x1, aux); // x1 += aux
 
 		// contribution from second term of Symanzik-improved action
@@ -142,8 +142,8 @@ void force_z(CPN_Conf const * const conf, Geometry const * const geo, long i, cm
 		// coeff2 = (C*U)(i)_mu * (C*U)(i+mu)_mu
 		coeff2=conf->C[geo->up[i][mu]][mu] * conf->C[i][mu] * conf->U[i][mu] * conf->U[geo->up[i][mu]][mu];
 		// aux = coeff1  * z(i-2mu) + coeff2 * z(i+2mu)
-		vector_linear_combination_cmplx_coeff_matrix(aux, conf->z[geo->dn[geo->dn[i][mu]][mu]], conf->z[geo->up[geo->up[i][mu]][mu]], coeff1, coeff2, conj(conf->M2[geo->dn[geo->dn[i][mu]][mu]][mu]), conf->M2[i][mu]);
-		(x2, aux); // x2 +=aux
+		vector_linear_combination_cmplx_coeff_matrix(aux, conf->z[geo->dn[geo->dn[i][mu]][mu]], conf->z[geo->up[geo->up[i][mu]][mu]], coeff1, coeff2, conf->M2[geo->dn[geo->dn[i][mu]][mu]][mu], conf->M2[i][mu]);
+		vector_sum(x2, aux); // x2 +=aux
 	}
 
 	// compute total force

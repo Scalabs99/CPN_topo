@@ -9,10 +9,9 @@ void vector_equal(cmplx *v, cmplx const * const w);
 void vector_sum(cmplx *v, cmplx const * const w);
 void vector_linear_combination_cmplx_coeff(cmplx *res, cmplx const * const v, cmplx const * const w, cmplx const a, cmplx const b);
 void vector_linear_combination_cmplx_coeff_matrix(cmplx *res, cmplx const * const v, cmplx const * const w, cmplx const a, cmplx const b, cmplx const * const A, cmplx const * const B); 
-cmplx const * const w, cmplx const a, cmplx const b, cmplx const * const A, complx const 
 void vector_linear_combination_real_coeff(cmplx *v, cmplx const * const w, double const a, double const b);
 cmplx vector_scalar_product(cmplx const * const v, cmplx const * const w);
-cmplx vector_scalar_product_matrix(cmplx const * const v, cmplx const * const w); 
+cmplx vector_scalar_product_matrix(cmplx const * const v, cmplx const * const w, cmplx const * const A); 
 double vector_norm(cmplx const * const v);
 double vector_abs(cmplx const * const v);
 void vector_times_real_const(cmplx *v, double const constant);

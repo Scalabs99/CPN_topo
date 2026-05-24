@@ -391,7 +391,7 @@ void compute_MD5_hash_conf(char *hash, CPN_Conf const * const conf, CPN_Param co
 	#endif
 }
 
-void init_twist_matrices(CPN_conf * conf, CPN_Param const * const param)
+void init_twist_matrices(CPN_Conf * conf, CPN_Param const * const param)
 {
         int mu, err; 
         long i, k; 
@@ -430,7 +430,7 @@ void init_twist_matrices(CPN_conf * conf, CPN_Param const * const param)
         for (i=0; i < param->d_volume; i++) 
         {
         
-             long x0 = i % Lx; 
+             long x0 = i % Lt; 
 
              for (mu = 0; mu < 2; mu++) 
              {
@@ -443,7 +443,7 @@ void init_twist_matrices(CPN_conf * conf, CPN_Param const * const param)
   
              for(k=0; k<N; k++) 
              {
-                 phase = 2.0 * pi * (double)k/(double)N;
+                 double phase = 2.0 * pi * (double)k/(double)N;
                  if(x0==0 || x0==Lt-1)
                  {
                
