@@ -22,6 +22,21 @@ aux=$( grep '#define N' include/macro.h )
 sed "s/${aux}/#define N ${CPN_NCOLORS}/g" include/macro.h > temp
 mv temp include/macro.h
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    OPENSSL_DIR=$(brew --prefix openssl 2>/dev/null)
+    if [ -d "$OPENSSL_DIR" ]; then
+        MY_CFLAGS="-g -O0 -I${OPENSSL_DIR}/include -Wno-deprecated-declarations"
+        MY_LDFLAGS="-L${OPENSSL_DIR}/lib"
+    else
+        echo "Warning: OpenSSL non trovato tramite Homebrew. Procedo coi parametri di base."
+        MY_CFLAGS="-g -O0 -Wno-deprecated-declarations"
+        MY_LDFLAGS=""
+    fi
+else
+    MY_CFLAGS="-g -O0 -Wno-deprecated-declarations"
+    MY_LDFLAGS=""
+fi
+
 # compile code
-./configure CFLAGS='-O3' #CC=icc CFLAGS='-O3 -axCORE-AVX512 -mtune=skylake -ip -ipo' LIBS="-ldl -lz -lc"
-make ${TARGET_EXEC} #-j 18
+./configure CFLAGS="$MY_CFLAGS" LDFLAGS="$MY_LDFLAGS"
+make ${TARGET_EXEC}
