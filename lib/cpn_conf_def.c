@@ -434,30 +434,36 @@ void init_twist_matrices(CPN_Conf * conf, CPN_Param const * const param)
 
              for (mu = 0; mu < 2; mu++) 
              {
-                  for (k = 0; k < N; k++) 
+                  if(x0==Lt-1 && mu==0)
                   {
-                       conf->M1[i][mu][k] = 1.0 + 0.0 * I;
-                       conf->M2[i][mu][k] = 1.0 + 0.0 * I;
+                       for(k=0; k<N; k++)
+                       {   
+                            double phase = 2.0 * pi * (double)k/(double)N;
+                            conf->M1[i][mu][k] = cexp(I * phase);
+                            conf->M2[i][mu][k] = cexp(I * phase); 
+                       }
                   }
-             }
-  
-             for(k=0; k<N; k++) 
-             {
-                 double phase = 2.0 * pi * (double)k/(double)N;
-                 if(x0==Lt-1)
-                 {
-               
-                       conf->M1[i][0][k] = cexp(I * phase);
-                       conf->M2[i][0][k] = cexp(I * phase); 
+                  else if(x0==Lt-2 && mu==0)
+                  {
+                       for(k=0; k<N; k++)
+                       {    
+                            double phase = 2.0 * pi * (double)k/(double)N;
+                            conf->M2[i][mu][k] = cexp(I * phase); 
+                       }
+                  }
+                  else 
+                  {
+                       for(k=0; k<N; k++)
+                       {
+                            conf->M1[i][mu][k] = 1.0 + 0.0 * I;
+                            conf->M2[i][mu][k] = 1.0 + 0.0 * I;
+                       } 
 
-                 }
-                 else if(x0==Lt-2)
-                 {
-                       conf->M2[i][0][k] = cexp(I * phase); 
-                 }
+                  }
 
-             }
-         }
+             } 
+
+        } 
 
            
 }

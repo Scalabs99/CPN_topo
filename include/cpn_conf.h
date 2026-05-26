@@ -24,7 +24,7 @@ typedef struct CPN_Conf {
 
         // for the twisted boundary conditions 
         cmplx *** M1; // M1[spacetime volume][spacetime dir][N] matrix to implement the twist for nn
-        cmplx *** M2; // M2[spacetime volume][spacetime dir][N] matrix to implement the twist fot next to nn
+        cmplx *** M2; // M2[spacetime volume][spacetime dir][N] matrix to implement the twist for next to nn
 
 } CPN_Conf;
 
