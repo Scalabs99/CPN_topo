@@ -448,6 +448,7 @@ void init_twist_matrices(CPN_Conf * conf, CPN_Param const * const param)
                        for(k=0; k<N; k++)
                        {    
                             double phase = 2.0 * pi * (double)k/(double)N;
+                            conf->M1[i][mu][k] = 1.0 + 0.0 * I;
                             conf->M2[i][mu][k] = cexp(I * phase); 
                        }
                   }
