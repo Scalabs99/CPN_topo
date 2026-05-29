@@ -25,15 +25,15 @@ mv temp include/macro.h
 if [[ "$OSTYPE" == "darwin"* ]]; then
     OPENSSL_DIR=$(brew --prefix openssl 2>/dev/null)
     if [ -d "$OPENSSL_DIR" ]; then
-        MY_CFLAGS="-g -O0 -I${OPENSSL_DIR}/include -Wno-deprecated-declarations"
+        MY_CFLAGS="-g -O3 -I${OPENSSL_DIR}/include -Wno-deprecated-declarations"
         MY_LDFLAGS="-L${OPENSSL_DIR}/lib"
     else
         echo "Warning: OpenSSL non trovato tramite Homebrew. Procedo coi parametri di base."
-        MY_CFLAGS="-g -O0 -Wno-deprecated-declarations"
+        MY_CFLAGS="-g -O3 -Wno-deprecated-declarations"
         MY_LDFLAGS=""
     fi
 else
-    MY_CFLAGS="-g -O0 -Wno-deprecated-declarations"
+    MY_CFLAGS="-g -O3 -Wno-deprecated-declarations"
     MY_LDFLAGS=""
 fi
 
