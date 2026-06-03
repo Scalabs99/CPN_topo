@@ -38,10 +38,10 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 	// aux_conf = conf (used for cooling)
 	copyconf(conf, param, aux_conf);
 
-	// perform cooling on aux_conf
+	// perform cooling on aux_conf, using the improved cooling function 
 	for (cool_step=1; cool_step<(param->d_coolsteps+1); cool_step++) 
     { 
-		cooling(aux_conf, geo, param); // perform 1 cooling step
+		cooling_improved(aux_conf, geo, param); // perform 1 cooling step
 		if ( ( cool_step % param->d_coolevery ) == 0 ) // perform measures on cooled conf
 		{ 
 			// compute topological observables of cooled configuration
@@ -68,7 +68,7 @@ cmplx plaquette(CPN_Conf const * const conf, Geometry const * const geo, long co
 	return( conf->U[i][mu] * conf->U[geo->up[i][mu]][nu] * conj(conf->U[geo->up[i][nu]][mu]) * conj(conf->U[i][nu]) );
 }
 
-// compute the energy density for single link E = S_{Symanzik}(theta=0) / (2 V N beta)
+// compute the energy density for single link E = S_{Symanzik}(theta=0) / (2 V N beta) with TBCs 
 double energy_density(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param const * const param) 
 { 
 	int i, mu;
@@ -80,10 +80,10 @@ double energy_density(CPN_Conf const * const conf, Geometry const * const geo, C
 	{ 
 		for(mu=0 ; mu<2 ; mu++)
 		{
-			aux1=vector_scalar_product(conf->z[geo->up[i][mu]], conf->z[i]); // conj( z(i+mu) ) * z(i)
+			aux1=vector_scalar_product_matrix(conf->z[geo->up[i][mu]], conf->z[i], conf->M1[i][mu]); // conj( z(i+mu) )* conj( M1(i)_mu ) * z(i)
 			e1 += conj(conf->U[i][mu]) * aux1;
 
-			aux2=vector_scalar_product(conf->z[geo->up[geo->up[i][mu]][mu]], conf->z[i]); // conj( z(i+2mu) ) * z(i)
+			aux2=vector_scalar_product_matrix(conf->z[geo->up[geo->up[i][mu]][mu]], conf->z[i], conf->M2[i][mu]); // conj( z(i+2mu) ) * conj( M2(i)_mu ) * z(i)
 			e2 += conj(conf->U[geo->up[i][mu]][mu] * conf->U[i][mu]) * aux2; 
 		}
 	}
@@ -93,6 +93,8 @@ double energy_density(CPN_Conf const * const conf, Geometry const * const geo, C
 	e = 2.0*(c1 + c2) - e/2.0;
 	return e; 
 }
+
+
 
 // compute the geometric topological charge density expressed in terms of the scalar field z on site i
 double geo_topo_charge_z_density(CPN_Conf const * const conf, Geometry const * const geo, long const i)
@@ -246,6 +248,39 @@ void cooling (CPN_Conf *conf, Geometry const * const geo, CPN_Param const * cons
 		vector_equal(conf->z[i], F_z); // align z along the local force on site i: z = F_z/|F_z|
 	}
 }
+
+// perform a single cooling step on the given conf (this function should receive an aux conf) 
+// cooling = each field is aligned to its local force: z = F_z / |F_z|, U = F_U / |F_U| 
+// forces are determined using the improved lattice action ( Symanzik ) with TBC 
+void cooling_improved ( CPN_Conf *conf, Geometry const * const geo, CPN_Param const * const param) 
+{ 
+	int i, mu;
+	cmplx F_U; 
+	cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
+
+	// cool U fields
+	for (i=0; i<param->d_volume ; i++) 
+	{
+		for(mu=0 ; mu<2 ; mu++)
+		{
+		    F_U=force_U(conf, geo, param, i, mu); // compute the force using the improved formula; 
+		    conf->U[i][mu] = F_U / cmplx_abs(F_U); // align U along the local force on link (i,mu): U = F_U/|F_U|
+		}
+	}
+
+	// cool z fields
+	for (i=0; i<param->d_volume; i++)
+	{
+		for (mu=0; mu<2; mu++)
+		{
+		    void force_z(conf, geo, i, F_z); // compute the force using the improved formula; 	
+		}
+		vector_normalization(F_z); // F_z -> F_z/|F_z|
+		vector_equal(conf->z[i], F_z); // align z along the local force on site i: z = F_z/|F_z|
+	}
+}
+
+
 
 // compute the spatially averaged Polyakov loop; 
 cmplx compute_Polyakov(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param const * const param)
