@@ -25,7 +25,7 @@ void real_main(char *input_file_name)
 	RNG_Param rng_state;
 	time_t start_date, finish_date;
 	clock_t start_time, finish_time;
-	FILE *datafilep, *swaptrackfilep, *topofilep;
+	FILE *datafilep, *swaptrackfilep, *topofilep, *gradfilep;
 	int i;
 
 	// read input file
@@ -40,6 +40,9 @@ void real_main(char *input_file_name)
 	// open topo data file
 	init_topo_file(&topofilep, &param);
 
+        // open gradient flow data file 
+        init_grad_file(&gradfilep, &param); 
+
 	// open swap tracking file
 	init_swap_track_file(&swaptrackfilep, &param);
 
@@ -52,6 +55,9 @@ void real_main(char *input_file_name)
 	// initialize aux conf (will be used for cooling and for periodic conf translations)
 	allocate_CPN_conf(&aux_conf, &param);
 
+        // initialize temp conf (will be used for the gradient flow procedure) 
+        allocate_CPN_conf(&temp_conf, &param); 
+
 	// initialize rectangles for hierarchic updates
 	init_rectangles_hierarchic_upd(&most_update, &param);
 
@@ -63,11 +69,19 @@ void real_main(char *input_file_name)
 	start_time=clock();
 	for (i=0; i<param.d_MC_step; i++)  
 	{
-		// perform a single step of parallel tempering with hierarchic updates and print state of replica swap
+
+                // perform a single step of parallel tempering with hierarchic updates and print state of replica swap
 		parallel_tempering_with_hierarchic_update(conf, most_update, &swap_counter, &param, &geo, &aux_conf, &rng_state);
 
 		// normalize the lattice fields of all replicas
 		if ( (conf[0].update_index) % param.d_num_norm == 0) normalize_replicas(conf,&param); 
+
+                // perform the gradient flow on homogeneous configuration and perform energy and topo charghe measures 
+                if ( (conf[0].update_index) % param.d_num_norm == 0) 
+                {
+                        perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, &aux_conf); 
+
+                }
 		
 		// perform measures on homogeneous configuration and print swaps evolution
 		if ( (conf[0].update_index) % param.d_measevery == 0)
