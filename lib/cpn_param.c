@@ -527,6 +527,28 @@ void init_topo_file(FILE **topofilep, CPN_Param const * const param)
 	fflush(*topofilep);
 }
 
+// initialize gradient flow measure file 
+void init_grad_file(FILE **gradf, CPN_Param const * const param) 
+{
+        *gradf=fopen(param->d_grad_file, "r");
+	if(*gradf!=NULL) // file exists
+	{
+		fclose(*gradf);
+		*gradf=fopen(param->d_grad_file, "a");
+	}
+	else // file doesn't exist
+	{
+		int mu;
+		*gradf=fopen(param->d_grad_file, "w");
+		fprintf(*gradf, "# %f ", param->d_beta);
+		for(mu=0; mu<2; mu++) fprintf(*gradf, "%d ", param->d_size[mu]);
+		fprintf(*gradf, "\n");
+	}
+	fflush(*gradf);
+
+}
+
+
 // print simulations details of cpn
 void print_simulation_details_cpn(char const * const input_file_name, CPN_Param const * const param, time_t const * const start_date, time_t const * const finish_date,
                                   clock_t const start_time, clock_t const finish_time)
