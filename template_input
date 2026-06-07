@@ -16,6 +16,7 @@ num_cool_step    50     # number of cooling steps
 meas_cool_every  5      # perform measures every <meas_cool_every> cool steps
 
 integration_step 0.01   # integration step for the gradient flow 
+tollerance       0.1    # tollerance for the gradient flow procedure
 
 rng_seed  42            # rng seed
 rng_start 0             # initialize rng state: 0=std initialization, 1=read rng state from file
