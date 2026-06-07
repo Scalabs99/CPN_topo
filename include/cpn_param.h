@@ -43,6 +43,9 @@ typedef struct CPN_Param {
 	// cooling
 	int d_coolsteps;	// how many cooling steps are performed in total
 	int d_coolevery;	// measure topological observables every <d_coolevery> cooling steps
+
+        // gradient flow parameters 
+        double int_step; // integration step;  
 	
 	// random number generator parameters
 	long d_seed;						// store rng seed
@@ -60,7 +63,8 @@ typedef struct CPN_Param {
 	char d_conf_file[STD_STRING_LENGTH];				// conf file name
 	char d_data_file[STD_STRING_LENGTH];				// non-topo data file name
 	char d_topo_file[STD_STRING_LENGTH];				// topo data file name
-	char d_log_file[STD_STRING_LENGTH];					// log file name
+        char d_grad_file[STD_STRING_LENGTH];                            // gradient flow file name 
+	char d_log_file[STD_STRING_LENGTH];			        // log file name
 	char d_swap_accept_file[STD_STRING_LENGTH];			// swap acceptances file
 	char d_swap_tracking_file[STD_STRING_LENGTH];		// swap history file
 	char d_multicanonic_acc_file[STD_STRING_LENGTH];	// multicanonical acceptances file	
@@ -78,6 +82,7 @@ void init_derived_constants(CPN_Param *);
 void free_param(CPN_Param *);
 void init_data_file(FILE **, CPN_Param const * const);
 void init_topo_file(FILE **, CPN_Param const * const);
+void init_grad_file(FILE **, CPN_Param const * const); 
 void print_simulation_details_cpn(char const * const, CPN_Param const * const, time_t const * const, time_t const * const, clock_t const, clock_t const);
 void print_simulation_details_multicanonic_cpn(char const * const, CPN_Param const * const, time_t const * const, time_t const * const, clock_t const, clock_t const);
 
