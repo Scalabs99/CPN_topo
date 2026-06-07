@@ -113,7 +113,7 @@ void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const *
         
 
         }
-        while (); 
+        while (abs(energy_out-energy_in) > (param->tollerance)); 
         
         fflush(gradfilep); 
 } 

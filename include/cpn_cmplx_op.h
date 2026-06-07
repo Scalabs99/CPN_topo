@@ -122,7 +122,7 @@ inline cmplx vector_scalar_product(cmplx const * const v, cmplx const * const w)
   return res;
 }
 
-// res = (v,w) = conj(v) \dot Aw = sum_{i=1}^{N} conj(v)[i] (Aw)[i]
+// res = (v,w) = conj(v) \dot Aw = sum_{i=1}^{N} conj(Av)[i] (w)[i]
 inline cmplx vector_scalar_product_matrix(cmplx const * const v, cmplx const * const w, cmplx const * const A)
 {
 	#ifdef __INTEL_COMPILER

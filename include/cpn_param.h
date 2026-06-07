@@ -45,7 +45,8 @@ typedef struct CPN_Param {
 	int d_coolevery;	// measure topological observables every <d_coolevery> cooling steps
 
         // gradient flow parameters 
-        double int_step; // integration step;  
+        double int_step; // integration step
+        double tollerance; // tollerance for the gradient flow procedure 
 	
 	// random number generator parameters
 	long d_seed;						// store rng seed
