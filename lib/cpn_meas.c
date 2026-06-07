@@ -10,7 +10,7 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 {
 	int cool_step=0, i;
 	double magn_susc[2], Q[3], chi_p[3];
-	double energy;
+	double energy, energy_in, energy_out;
         cmplx Pol_loop; // Polyakov loop; 
 
 	energy=energy_density(conf, geo, param);
@@ -40,7 +40,7 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 
 	// perform cooling on aux_conf, using the improved cooling function 
 	for (cool_step=1; cool_step<(param->d_coolsteps+1); cool_step++) 
-    { 
+        { 
 		cooling_improved(aux_conf, geo, param); // perform 1 cooling step
 		if ( ( cool_step % param->d_coolevery ) == 0 ) // perform measures on cooled conf
 		{ 
@@ -60,6 +60,63 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 
 	fflush(topofilep);
 }
+
+void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const * const geo, 
+                               CPN_Param const * const param, FILE *gradfilep, CPN_Conf *aux_conf)
+{
+        int i;        
+        double energy, energy_in, energy_out; 
+        double Q[3]; 
+
+
+        // aux_conf = conf ( we work on the aux conf and not on the conf ) 
+        copyconf(conf, param, aux_conf); 
+
+        // compute and print the energy and the topological charge of the conf before the gradient flow
+        energy = energy_density(aux_conf, geo, param); 
+        
+        for (i=0; i<3; i++)
+	{
+	     Q[i] = topo_charge(aux_conf, geo, param, i);
+		  
+	}
+        
+        fprintf(gradfilep, "%.16lf", energy);  
+        for (i=0; i<3; i++) fprintf(gradfilep, " %.16lf", Q[i]);
+        fprintf(gradfilep, "\n"); 
+        
+       
+
+        // perform gradient flow 
+        do { 
+             
+             // compute the energy before the integration step 
+             energy_in = energy_density(aux_conf, geo, param); 
+
+             // perform the integration step 
+             gradient_flow(aux_conf, geo, param); 
+ 
+             // compute the energy after the integration step 
+             energy_out = energy_density(aux_conf, geo, param); 
+             
+             // compute the topological charge of the configuration after the integration step 
+             for (i=0; i<3; i++)
+	     {
+	          Q[i] = topo_charge(aux_conf, geo, param, i);
+		  
+	     }
+ 
+             // print the energy and the topological charge of the out configuration 
+             fprintf(gradfilep, "%.16lf", energy_out);  
+             for (i=0; i<3; i++) fprintf(gradfilep, " %.16lf", Q[i]);
+             fprintf(gradfilep, "\n"); 
+        
+
+        }
+        while (); 
+        
+        fflush(gradfilep); 
+} 
 
 // compute plaquette Pi_{mu nu}(i) on site i and plane (mu,nu)
 // Pi_{mu nu}(i) = U(i)_mu U(i+mu)_nu conj( U(i+nu) )_mu conj( U(i) )_nu
@@ -263,22 +320,54 @@ void cooling_improved ( CPN_Conf *conf, Geometry const * const geo, CPN_Param co
 	{
 		for(mu=0 ; mu<2 ; mu++)
 		{
-		    F_U=force_U(conf, geo, param, i, mu); // compute the force using the improved formula; 
-		    conf->U[i][mu] = F_U / cmplx_abs(F_U); // align U along the local force on link (i,mu): U = F_U/|F_U|
+		     F_U=force_U(conf, geo, param, i, mu); // compute the force using the improved formula; 
+		     conf->U[i][mu] = F_U / cmplx_abs(F_U); // align U along the local force on link (i,mu): U = F_U/|F_U|
 		}
 	}
 
 	// cool z fields
 	for (i=0; i<param->d_volume; i++)
 	{
-		for (mu=0; mu<2; mu++)
-		{
-		    void force_z(conf, geo, i, F_z); // compute the force using the improved formula; 	
-		}
+		force_z(conf, geo, i, F_z); // compute the force using the improved formula; 	
 		vector_normalization(F_z); // F_z -> F_z/|F_z|
 		vector_equal(conf->z[i], F_z); // align z along the local force on site i: z = F_z/|F_z|
 	}
 }
+
+// Perform a single integration step for the gradient flow equations 
+// The integration scheme is the simple Euler scheme 
+void gradient_flow(CPN_Conf *conf, Geometry const * const geo, CPN_Param const * const param) 
+{
+        int i, mu; 
+        double c = 2.0 * (param->d_beta) * N * (param->int_step); 
+        cmplx F_U;    
+        cmplx temp_U[2] __attribute__((aligned(DOUBLE_ALIGN))); // temporary variable
+        cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
+        cmplx temp_U; 
+
+        for (i=0; i<param->d_volume; i++)
+        {       
+                // Compute the force F_U and the Euler evolution step 
+                for (mu=0; mu<2; mu++)
+                {
+                      F_U = force_U(conf, geo, param, i, mu); 
+	              temp_U[mu] = conf->U[i][mu] + c * F_U; // save the updated link variable U
+                      
+                }     
+
+                // Compute the force F_z and the Euler evolution step
+                force_z(conf, geo, i, F_z); 
+                vector_times_real_constant(F_z, c); 
+                vector_sum(conf->z[i], F_z);   
+                
+                // assign the updated variable temp_U to U[i][mu] 
+                vector_equal(conf->U[i], temp_U); 
+               
+                
+        }
+
+        
+} 
 
 
 
