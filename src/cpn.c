@@ -55,9 +55,6 @@ void real_main(char *input_file_name)
 	// initialize aux conf (will be used for cooling and for periodic conf translations)
 	allocate_CPN_conf(&aux_conf, &param);
 
-        // initialize temp conf (will be used for the gradient flow procedure) 
-        allocate_CPN_conf(&temp_conf, &param); 
-
 	// initialize rectangles for hierarchic updates
 	init_rectangles_hierarchic_upd(&most_update, &param);
 

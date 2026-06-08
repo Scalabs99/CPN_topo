@@ -10,7 +10,7 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 {
 	int cool_step=0, i;
 	double magn_susc[2], Q[3], chi_p[3];
-	double energy, energy_in, energy_out;
+	double energy; 
         cmplx Pol_loop; // Polyakov loop; 
 
 	energy=energy_density(conf, geo, param);
@@ -113,7 +113,7 @@ void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const *
         
 
         }
-        while (abs(energy_out-energy_in) > (param->tollerance)); 
+        while (fabs(energy_out-energy_in) > (param->tollerance)); 
         
         fflush(gradfilep); 
 } 
@@ -343,7 +343,6 @@ void gradient_flow(CPN_Conf *conf, Geometry const * const geo, CPN_Param const *
         cmplx F_U;    
         cmplx temp_U[2] __attribute__((aligned(DOUBLE_ALIGN))); // temporary variable
         cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
-        cmplx temp_U; 
 
         for (i=0; i<param->d_volume; i++)
         {       
@@ -357,7 +356,7 @@ void gradient_flow(CPN_Conf *conf, Geometry const * const geo, CPN_Param const *
 
                 // Compute the force F_z and the Euler evolution step
                 force_z(conf, geo, i, F_z); 
-                vector_times_real_constant(F_z, c); 
+                vector_times_real_const(F_z, c); 
                 vector_sum(conf->z[i], F_z);   
                 
                 // assign the updated variable temp_U to U[i][mu] 
