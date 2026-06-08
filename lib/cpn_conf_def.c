@@ -48,7 +48,7 @@ void init_CPN_replicas(CPN_Conf **conf, CPN_Param const * const param, RNG_Param
 void allocate_CPN_conf(CPN_Conf *conf, CPN_Param const * const param)
 {
 	long i;
-	int mu, err;
+	int err;
 	err=posix_memalign((void**) &(conf->z), (size_t) DOUBLE_ALIGN, (size_t) param->d_volume * sizeof(cmplx *));
 	if(err!=0)
         {
