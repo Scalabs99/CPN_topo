@@ -36,7 +36,7 @@ num_single_site_stoc_upd 2500    # number of stochastic single sites updates
 conf_file                 conf.dat                # save conf for backup
 data_file                 dati.dat                # save non-topological observables
 topo_file                 topo.dat                # save topological observables
-gradflow_file             gradflow.dat            # save the observable for the gradient flow 
+grad_file                 grad.dat                # save the observable for the gradient flow 
 log_file                  my_log.dat              # save simulations details
 rng_state_file            rng_state.dat           # save rng state
 swap_acc_file             swap_acc.dat            # save swap acceptances (parallel tempering only)

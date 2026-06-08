@@ -48,19 +48,19 @@ void init_CPN_replicas(CPN_Conf **conf, CPN_Param const * const param, RNG_Param
 void allocate_CPN_conf(CPN_Conf *conf, CPN_Param const * const param)
 {
 	long i;
-	int err;
+	int mu, err;
 	err=posix_memalign((void**) &(conf->z), (size_t) DOUBLE_ALIGN, (size_t) param->d_volume * sizeof(cmplx *));
 	if(err!=0)
-    {
+        {
 		fprintf(stderr, "Problems in allocating the lattice! (%s, %d)\n", __FILE__, __LINE__);
 		exit(EXIT_FAILURE);
-    }
+        }
 	err=posix_memalign((void**) &(conf->U), (size_t) DOUBLE_ALIGN, (size_t) param->d_volume * sizeof(cmplx *));
 	if(err!=0)
-    {
+        {
 		fprintf(stderr, "Problems in allocating the lattice! (%s, %d)\n", __FILE__, __LINE__);
 		exit(EXIT_FAILURE);
-    }
+        }
 	for(i=0; i<param->d_volume; i++)
 	{
 		err=posix_memalign((void**) &(conf->z[i]), (size_t) DOUBLE_ALIGN, (size_t) N * sizeof(cmplx));
@@ -76,6 +76,8 @@ void allocate_CPN_conf(CPN_Conf *conf, CPN_Param const * const param)
 			exit(EXIT_FAILURE);
 		}
 	}
+        
+        
 }
 
 // initialize single CPN conf replica

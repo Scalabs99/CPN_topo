@@ -113,7 +113,7 @@ void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const *
         
 
         }
-        while (fabs(energy_out-energy_in) > (param->tollerance)); 
+        while (fabs(energy_out-energy_in) > (param->d_tollerance)); 
         
         fflush(gradfilep); 
 } 
@@ -339,7 +339,7 @@ void cooling_improved ( CPN_Conf *conf, Geometry const * const geo, CPN_Param co
 void gradient_flow(CPN_Conf *conf, Geometry const * const geo, CPN_Param const * const param) 
 {
         int i, mu; 
-        double c = 2.0 * (param->d_beta) * N * (param->int_step); 
+        double c = 2.0 * (param->d_beta) * N * (param->d_int_step); 
         cmplx F_U;    
         cmplx temp_U[2] __attribute__((aligned(DOUBLE_ALIGN))); // temporary variable
         cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
@@ -348,9 +348,9 @@ void gradient_flow(CPN_Conf *conf, Geometry const * const geo, CPN_Param const *
         {       
                 // Compute the force F_U and the Euler evolution step 
                 for (mu=0; mu<2; mu++)
-                {
-                      F_U = force_U(conf, geo, param, i, mu); 
-	              temp_U[mu] = conf->U[i][mu] + c * F_U; // save the updated link variable U
+                { 
+                       F_U = force_U(conf, geo, param, i, mu); 
+	               temp_U[mu] = conf->U[i][mu] + c * F_U; // save the updated link variable U
                       
                 }     
 
@@ -360,7 +360,11 @@ void gradient_flow(CPN_Conf *conf, Geometry const * const geo, CPN_Param const *
                 vector_sum(conf->z[i], F_z);   
                 
                 // assign the updated variable temp_U to U[i][mu] 
-                vector_equal(conf->U[i], temp_U); 
+                for (mu=0; mu<2; mu++)
+                {
+                       conf->U[i][mu] = temp_U[mu];                      
+   
+                }
                
                 
         }

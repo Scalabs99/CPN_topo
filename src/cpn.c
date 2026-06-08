@@ -55,6 +55,12 @@ void real_main(char *input_file_name)
 	// initialize aux conf (will be used for cooling and for periodic conf translations)
 	allocate_CPN_conf(&aux_conf, &param);
 
+        // initialize the C[i][mu]
+        init_bound_cond(&aux_conf, 0, &param); 
+        
+        // initialize the twist matrices 
+        init_twist_matrices(&aux_conf, &param); 
+
 	// initialize rectangles for hierarchic updates
 	init_rectangles_hierarchic_upd(&most_update, &param);
 

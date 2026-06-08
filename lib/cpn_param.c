@@ -218,6 +218,28 @@ void read_input(char const * const input_file_name, CPN_Param *param)
 				}
 				param->d_coolevery=temp_i;
 			}
+                        else if(strncmp(str, "int_step", 8)==0) 
+                        {
+                                err=fscanf(input_fp, "%lf", &temp_d); 
+                                if(err!=1) 
+                                {
+                                        fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__); 
+                                        exit(EXIT_FAILURE); 
+                                }
+                                param->d_int_step=temp_d; 
+
+                        }
+                        else if(strncmp(str, "tollerance", 12)==0) 
+                        {
+                                err=fscanf(input_fp, "%lf", &temp_d); 
+                                if(err!=1) 
+                                {
+                                        fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__); 
+                                        exit(EXIT_FAILURE); 
+                                }
+                                param->d_tollerance=temp_d; 
+
+                        }
 			else if(strncmp(str, "conf_file", 9)==0)
 			{ 
 				err=fscanf(input_fp, "%s", temp_str);
@@ -248,6 +270,18 @@ void read_input(char const * const input_file_name, CPN_Param *param)
 				}
 				strcpy(param->d_topo_file, temp_str);
 			}
+                        else if(strncmp(str, "grad_file", 9)==0)
+                        {
+
+                                err=fscanf(input_fp, "%s", temp_str); 
+                                if(err!=1)
+                                {
+                                        fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__); 
+                                        exit(EXIT_FAILURE); 
+
+                                }
+                                strcpy(param->d_grad_file, temp_str); 
+                        }
 			else if(strncmp(str, "log_file", 8)==0)
 			{ 
 				err=fscanf(input_fp, "%s", temp_str);
