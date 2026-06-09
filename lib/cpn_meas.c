@@ -62,7 +62,7 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 }
 
 void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const * const geo, 
-                               CPN_Param const * const param, FILE *gradfilep, CPN_Conf *aux_conf)
+                               CPN_Param const * const param, FILE *gradfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
         int i;        
         double energy, energy_in, energy_out; 
@@ -85,16 +85,18 @@ void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const *
         for (i=0; i<3; i++) fprintf(gradfilep, " %.16lf", Q[i]);
         fprintf(gradfilep, "\n"); 
         
+        // Initialize energy_out with the value of energy 
+        energy_out = energy; 
        
 
         // perform gradient flow 
         do { 
              
              // compute the energy before the integration step 
-             energy_in = energy_density(aux_conf, geo, param); 
+             energy_in = energy_out; 
 
              // perform the integration step 
-             gradient_flow(aux_conf, geo, param); 
+             gradient_flow(aux_conf, flow_temp, geo, param); 
  
              // compute the energy after the integration step 
              energy_out = energy_density(aux_conf, geo, param); 
@@ -336,12 +338,11 @@ void cooling_improved ( CPN_Conf *conf, Geometry const * const geo, CPN_Param co
 
 // Perform a single integration step for the gradient flow equations 
 // The integration scheme is the simple Euler scheme 
-void gradient_flow(CPN_Conf *conf, Geometry const * const geo, CPN_Param const * const param) 
+void gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const * const geo, CPN_Param const * const param) 
 {
         int i, mu; 
         double c = 2.0 * (param->d_beta) * N * (param->d_int_step); 
         cmplx F_U;    
-        cmplx temp_U[2] __attribute__((aligned(DOUBLE_ALIGN))); // temporary variable
         cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
 
         for (i=0; i<param->d_volume; i++)
@@ -350,23 +351,32 @@ void gradient_flow(CPN_Conf *conf, Geometry const * const geo, CPN_Param const *
                 for (mu=0; mu<2; mu++)
                 { 
                        F_U = force_U(conf, geo, param, i, mu); 
-	               temp_U[mu] = conf->U[i][mu] + c * F_U; // save the updated link variable U
-                      
+	               flow_temp->U[i][mu] = conf->U[i][mu] + c * F_U; // save the updated link variable U
+                       flow_temp->U[i][mu] = flow_temp->U[i][mu] / cmplx_abs(flow_temp->U[i][mu]); 
                 }     
 
                 // Compute the force F_z and the Euler evolution step
                 force_z(conf, geo, i, F_z); 
                 vector_times_real_const(F_z, c); 
-                vector_sum(conf->z[i], F_z);   
                 
-                // assign the updated variable temp_U to U[i][mu] 
-                for (mu=0; mu<2; mu++)
-                {
-                       conf->U[i][mu] = temp_U[mu];                      
-   
-                }
+                // Assign the value of conf->z[i] to flow_temp->z[i] 
+                vector_equal(flow_temp->z[i], conf->z[i]);
+
+                // Euler step 
+                vector_sum(flow_temp->z[i], F_z);   
+                
+                // normalize z[i] and U[i][mu]
+                vector_normalization(flow_temp->z[i]);
+           
                
                 
+        }
+
+        for (i = 0; i < param->d_volume; i++)
+        {
+               vector_equal(conf->z[i], flow_temp->z[i]);
+               conf->U[i][0] = flow_temp->U[i][0];
+               conf->U[i][1] = flow_temp->U[i][1];
         }
 
         

@@ -18,6 +18,7 @@ void real_main(char *input_file_name)
 {
 	CPN_Conf *conf;
 	CPN_Conf aux_conf;
+        CPN_Conf flow_conf; 
 	CPN_Param param;	
 	Geometry geo;
 	Rectangle *most_update;
@@ -55,17 +56,29 @@ void real_main(char *input_file_name)
 	// initialize aux conf (will be used for cooling and for periodic conf translations)
 	allocate_CPN_conf(&aux_conf, &param);
 
-        // initialize the C[i][mu]
+        // initialize the C[i][mu] for the aux_conf
         init_bound_cond(&aux_conf, 0, &param); 
         
         // initialize the twist matrices 
         init_twist_matrices(&aux_conf, &param); 
+        
+        // initialize flow_conf ( will be used for gradient flow ) 
+        allocate_CPN_conf(&flow_conf, &param); 
 
-	// initialize rectangles for hierarchic updates
+        // initialize the C[i][mu] for the flow_conf 
+        init_bound_cond(&flow_conf, 0, &param); 
+ 
+        // initialize the twist matrices for the flow_conf 
+        init_twist_matrices(&flow_conf, &param); 
+
+        // initialize rectangles for hierarchic updates
 	init_rectangles_hierarchic_upd(&most_update, &param);
 
 	// initialize swap acceptances array
 	init_swap_acceptances(&swap_counter, &param);
+
+        // Perform the gradient flow. We don't need to put it into the Montecarlo loop 
+        perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, &flow_conf, &aux_conf);
 
  	// Monte Carlo begins
 	time(&start_date);
@@ -78,13 +91,6 @@ void real_main(char *input_file_name)
 
 		// normalize the lattice fields of all replicas
 		if ( (conf[0].update_index) % param.d_num_norm == 0) normalize_replicas(conf,&param); 
-
-                // perform the gradient flow on homogeneous configuration and perform energy and topo charghe measures 
-                if ( (conf[0].update_index) % param.d_num_norm == 0) 
-                {
-                        perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, &aux_conf); 
-
-                }
 		
 		// perform measures on homogeneous configuration and print swaps evolution
 		if ( (conf[0].update_index) % param.d_measevery == 0)
