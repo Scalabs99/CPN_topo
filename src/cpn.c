@@ -26,7 +26,7 @@ void real_main(char *input_file_name)
 	RNG_Param rng_state;
 	time_t start_date, finish_date;
 	clock_t start_time, finish_time;
-	FILE *datafilep, *swaptrackfilep, *topofilep, *gradfilep;
+	FILE *datafilep, *swaptrackfilep, *topofilep, *coolfilep, *gradfilep;
 	int i;
 
 	// read input file
@@ -40,6 +40,9 @@ void real_main(char *input_file_name)
 
 	// open topo data file
 	init_topo_file(&topofilep, &param);
+
+        // open cooling data file 
+        init_cool_file(&coolfilep, &param); 
 
         // open gradient flow data file 
         init_grad_file(&gradfilep, &param); 
@@ -77,8 +80,12 @@ void real_main(char *input_file_name)
 	// initialize swap acceptances array
 	init_swap_acceptances(&swap_counter, &param);
 
-        // Perform the gradient flow. We don't need to put it into the Montecarlo loop 
-        perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, &flow_conf, &aux_conf);
+        // If d_MC_step == 0 perform the cooling and the gradient flow 
+        if(param.d_MC_step == 0)
+        {
+         	perform_measure_cooling(&(conf[0]), &geo, &param, coolfilep, &aux_conf); 
+                perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, &flow_conf, &aux_conf);
+        }
 
  	// Monte Carlo begins
 	time(&start_date);

@@ -282,6 +282,18 @@ void read_input(char const * const input_file_name, CPN_Param *param)
                                 }
                                 strcpy(param->d_grad_file, temp_str); 
                         }
+			else if(strncmp(str, "cool_file", 9)==0)
+                        {
+
+                                err=fscanf(input_fp, "%s", temp_str); 
+                                if(err!=1)
+                                {
+                                        fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__); 
+                                        exit(EXIT_FAILURE); 
+
+                                }
+                                strcpy(param->d_cool_file, temp_str); 
+                        }
 			else if(strncmp(str, "log_file", 8)==0)
 			{ 
 				err=fscanf(input_fp, "%s", temp_str);
@@ -559,6 +571,29 @@ void init_topo_file(FILE **topofilep, CPN_Param const * const param)
 		fprintf(*topofilep, "\n");
 	}
 	fflush(*topofilep);
+}
+
+// initialize cooling measure file 
+void init_cool_file(FILE **coolf, CPN_Param const * const param) 
+{
+ 	*coolf=fopen(param->d_cool_file, "r"); 
+        if(*coolf!=NULL) // file exists 
+        {
+         	fclose(*coolf); 
+                *coolf=fopen(param->d_grad_file, "a"); 
+        }
+        else // file doesn't exist 
+        {
+         	int mu;
+		*coolf=fopen(param->d_cool_file, "w");
+		fprintf(*coolf, "# %f ", param->d_beta);
+		for(mu=0; mu<2; mu++) fprintf(*coolf, "%d ", param->d_size[mu]);
+		fprintf(*coolf, "\n");         	
+
+
+        }
+        fflush(*coolf); 
+
 }
 
 // initialize gradient flow measure file 

@@ -120,6 +120,65 @@ void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const *
         fflush(gradfilep); 
 } 
 
+void perform_measure_cooling(CPN_Conf const * const conf, Geometry const * const geo, 
+                               CPN_Param const * const param, FILE *coolfilep, CPN_Conf *aux_conf)
+{
+ 	int i; 
+        double energy, energy_in, energy_out; 
+        double Q[3]; 
+
+        // aux_conf = conf we work on the aux_conf 
+        copyconf(conf, param, aux_conf); 
+
+        // compute the energy 
+        energy = energy_density(aux_conf, geo, param); 
+
+	for (i=0; i<3; i++)
+	{
+	     Q[i] = topo_charge(aux_conf, geo, param, i);
+		  
+	}
+
+	fprintf(coolfilep, "%.16lf", energy);  
+        for (i=0; i<3; i++) fprintf(coolfilep, " %.16lf", Q[i]);
+        fprintf(coolfilep, "\n"); 
+        
+        // Initialize energy_out with the value of energy 
+        energy_out = energy; 
+
+ 	 do { 
+             
+             // compute the energy before the integration step 
+             energy_in = energy_out; 
+
+             // perform the cooling step
+             cooling_improved(aux_conf, geo, param); 
+ 
+             // compute the energy after the integration step 
+             energy_out = energy_density(aux_conf, geo, param); 
+             
+             // compute the topological charge of the configuration after the cooling step 
+             for (i=0; i<3; i++)
+	     {
+	          Q[i] = topo_charge(aux_conf, geo, param, i);
+		  
+	     }
+ 
+             // print the energy and the topological charge of the out configuration 
+             fprintf(coolfilep, "%.16lf", energy_out);  
+             for (i=0; i<3; i++) fprintf(coolfilep, " %.16lf", Q[i]);
+             fprintf(coolfilep, "\n"); 
+        
+
+        }
+        while (fabs(energy_out-energy_in) > (param->d_tollerance)); 
+        
+        fflush(coolfilep); 
+
+
+
+}
+
 // compute plaquette Pi_{mu nu}(i) on site i and plane (mu,nu)
 // Pi_{mu nu}(i) = U(i)_mu U(i+mu)_nu conj( U(i+nu) )_mu conj( U(i) )_nu
 cmplx plaquette(CPN_Conf const * const conf, Geometry const * const geo, long const i, int const mu, int const nu)

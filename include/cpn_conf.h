@@ -58,6 +58,7 @@ void free_CPN_conf(CPN_Conf *, CPN_Param const * const);
 // in lib/cpn_meas.c
 void perform_measures_localobs(CPN_Conf  * , Geometry const * const, CPN_Param const * const, FILE *, FILE *, CPN_Conf *);
 void perform_measure_gradient_flow(CPN_Conf const * const, Geometry const * const, CPN_Param const * const, FILE *, CPN_Conf *, CPN_Conf *); 
+void perform_measure_cooling(CPN_Conf const * const, Geometry const * const, CPN_Param const * const, FILE *, CPN_Conf *); 
 cmplx plaquette(CPN_Conf const * const, Geometry const * const, long const, int const mu, int const nu);
 double energy_density(CPN_Conf const * const, Geometry const * const, CPN_Param const * const);
 double geo_topo_charge_z_density(CPN_Conf const * const, Geometry const * const, long const);
