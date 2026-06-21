@@ -580,7 +580,7 @@ void init_cool_file(FILE **coolf, CPN_Param const * const param)
         if(*coolf!=NULL) // file exists 
         {
          	fclose(*coolf); 
-                *coolf=fopen(param->d_grad_file, "a"); 
+                *coolf=fopen(param->d_cool_file, "a"); 
         }
         else // file doesn't exist 
         {

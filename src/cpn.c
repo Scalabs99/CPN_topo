@@ -1,4 +1,4 @@
-#ifndef CPN_C
+s#ifndef CPN_C
 #define CPN_C
 
 #include "../include/macro.h" // NOTE: must be included before stdlib.h to activate posix_memalign correctly
@@ -135,6 +135,9 @@ void real_main(char *input_file_name)
 
 	// close topo file
 	fclose(topofilep);
+
+        if (coolfilep != NULL) fclose(coolfilep);
+	if (gradfilep != NULL) fclose(gradfilep);
 
 	// close swap tracking file
 	end_swap_track_file(&swaptrackfilep, &param);
