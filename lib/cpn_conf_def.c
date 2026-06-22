@@ -497,9 +497,19 @@ void free_CPN_conf(CPN_Conf *conf, CPN_Param const * const param)
 	{
 		free(conf->z[i]);
 		free(conf->U[i]);
+
+		for(mu=0; mu<2; mu++)
+		{
+                 	free(conf->M1[i][mu]);
+			free(conf->M2[i][mu]);
+		}
+		free(conf->M1[i]);
+		free(conf->M2[i]);
 	}
 	free(conf->z);
 	free(conf->U);
+        free(conf->M1); 
+        free(conf->M2);
 }
 
 #endif

@@ -84,6 +84,8 @@ void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const *
         fprintf(gradfilep, "%.16lf", energy);  
         for (i=0; i<3; i++) fprintf(gradfilep, " %.16lf", Q[i]);
         fprintf(gradfilep, "\n"); 
+
+        fflush(gradfilep); 
         
         // Initialize energy_out with the value of energy 
         energy_out = energy; 
@@ -112,12 +114,13 @@ void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const *
              fprintf(gradfilep, "%.16lf", energy_out);  
              for (i=0; i<3; i++) fprintf(gradfilep, " %.16lf", Q[i]);
              fprintf(gradfilep, "\n"); 
+
+             fflush(gradfilep); 
         
 
         }
         while (fabs(energy_out-energy_in) > (param->d_tollerance)); 
         
-        fflush(gradfilep); 
 } 
 
 void perform_measure_cooling(CPN_Conf const * const conf, Geometry const * const geo, 
@@ -142,6 +145,9 @@ void perform_measure_cooling(CPN_Conf const * const conf, Geometry const * const
 	fprintf(coolfilep, "%.16lf", energy);  
         for (i=0; i<3; i++) fprintf(coolfilep, " %.16lf", Q[i]);
         fprintf(coolfilep, "\n"); 
+
+        // Forces the writing of the first value on the file 
+        fflush(coolfilep)
         
         // Initialize energy_out with the value of energy 
         energy_out = energy; 
@@ -168,15 +174,14 @@ void perform_measure_cooling(CPN_Conf const * const conf, Geometry const * const
              fprintf(coolfilep, "%.16lf", energy_out);  
              for (i=0; i<3; i++) fprintf(coolfilep, " %.16lf", Q[i]);
              fprintf(coolfilep, "\n"); 
+
+             fflush(coolfilep); 
         
 
         }
         while (fabs(energy_out-energy_in) > (param->d_tollerance)); 
         
-        fflush(coolfilep); 
-
-
-
+        
 }
 
 // compute plaquette Pi_{mu nu}(i) on site i and plane (mu,nu)
