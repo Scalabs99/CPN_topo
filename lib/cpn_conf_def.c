@@ -492,7 +492,7 @@ void free_bound_cond(CPN_Conf *conf, CPN_Param const * const param)
   
 void free_CPN_conf(CPN_Conf *conf, CPN_Param const * const param)
 {
-	long i;
+	long i, mu; 
 	for(i=0; i<(param->d_volume); i++)
 	{
 		free(conf->z[i]);
