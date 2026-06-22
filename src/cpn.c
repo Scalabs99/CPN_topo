@@ -1,4 +1,4 @@
-s#ifndef CPN_C
+#ifndef CPN_C
 #define CPN_C
 
 #include "../include/macro.h" // NOTE: must be included before stdlib.h to activate posix_memalign correctly
