@@ -147,7 +147,7 @@ void perform_measure_cooling(CPN_Conf const * const conf, Geometry const * const
         fprintf(coolfilep, "\n"); 
 
         // Forces the writing of the first value on the file 
-        fflush(coolfilep)
+        fflush(coolfilep);
         
         // Initialize energy_out with the value of energy 
         energy_out = energy; 
