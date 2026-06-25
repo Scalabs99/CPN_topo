@@ -86,6 +86,7 @@ void init_data_file(FILE **, CPN_Param const * const);
 void init_topo_file(FILE **, CPN_Param const * const);
 void init_grad_file(FILE **, CPN_Param const * const); 
 void init_cool_file(FILE **, CPN_Param const * const); 
+void init_argP_file(FILE **, char const * const, CPN_Param const * const); 
 void print_simulation_details_cpn(char const * const, CPN_Param const * const, time_t const * const, time_t const * const, clock_t const, clock_t const);
 void print_simulation_details_multicanonic_cpn(char const * const, CPN_Param const * const, time_t const * const, time_t const * const, clock_t const, clock_t const);
 

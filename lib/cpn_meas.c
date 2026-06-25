@@ -62,11 +62,14 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 }
 
 void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const * const geo, 
-                               CPN_Param const * const param, FILE *gradfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
+                               CPN_Param const * const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
         int i;        
         double energy, energy_in, energy_out; 
         double Q[3]; 
+        long Lx = param->d_size[1]; 
+        long j; 
+        double arg_P; 
 
 
         // aux_conf = conf ( we work on the aux conf and not on the conf ) 
@@ -120,15 +123,30 @@ void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const *
 
         }
         while (fabs(energy_out-energy_in) > (param->d_tollerance)); 
+
+        // compute the argP(n_x) on the final configuration       
+        for(j=0; j<Lx; j++)
+        {
+         	arg_P = compute_arg_Pol(aux_conf, geo, param, j);
+                fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
+                fflush(argPfilep); 
+        }
+
+
+        
         
 } 
 
 void perform_measure_cooling(CPN_Conf const * const conf, Geometry const * const geo, 
-                               CPN_Param const * const param, FILE *coolfilep, CPN_Conf *aux_conf)
+                               CPN_Param const * const param, FILE *coolfilep, FILE *argPfilep, CPN_Conf *aux_conf)
 {
  	int i; 
         double energy, energy_in, energy_out; 
         double Q[3]; 
+        long Lx = param->d_size[1];
+        long j;  
+        double arg_P;  
+ 
 
         // aux_conf = conf we work on the aux_conf 
         copyconf(conf, param, aux_conf); 
@@ -180,6 +198,17 @@ void perform_measure_cooling(CPN_Conf const * const conf, Geometry const * const
 
         }
         while (fabs(energy_out-energy_in) > (param->d_tollerance)); 
+
+  
+        // compute the argP(n_x) on the final configuration       
+        for(j=0; j<Lx; j++)
+        {
+         	arg_P = compute_arg_Pol(aux_conf, geo, param, j);
+                fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
+                fflush(argPfilep); 
+        }
+
+        
         
         
 }
@@ -445,6 +474,29 @@ void gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const * const g
 
         
 } 
+
+// compute the arg(P(n_x)) for the cooled ( either with GF or cooling ) configuration 
+double compute_arg_Pol(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param const * const param, long const i)
+{
+ 	double arg_pol = 0.0; 
+        long j, r; 
+        int Lt = param->d_size[0];
+        long cart_coord[2] = {0, i}; 
+        r = cart_to_si(cart_coord, param); 
+        cmplx temp = 1.0; 
+                
+        for (j=0; j<Lt; j++)
+        {
+         	temp *= conf->U[r][0];    
+         	r = geo->up[r][0]; // jump to the next site ( in the 0 direction ) 
+                    
+        } 
+
+        arg_pol = arg(temp); 
+        return arg_pol; 
+        
+        	
+}
 
 
 

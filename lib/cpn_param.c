@@ -617,6 +617,28 @@ void init_grad_file(FILE **gradf, CPN_Param const * const param)
 
 }
 
+// initialize argP file ( use the same function both for the grad flow and the cooling ) 
+void init_argP_file(FILE **argPfile, char const * const file_name, CPN_Param const * const param)
+{
+ 	*argPfile=fopen(file_name, "r");
+	if(*argPfile!=NULL) // file exists
+	{
+		fclose(*argPfile);
+		*argPfile=fopen(file_name, "a");
+	}
+	else // file doesn't exist
+	{
+		int mu;
+		*argPfile=fopen(file_name, "w");
+		fprintf(*argPfile, "# %f ", param->d_beta);
+		for(mu=0; mu<2; mu++) fprintf(*argPfile, "%d ", param->d_size[mu]);
+		fprintf(*argPfile, "\n");
+	}
+	fflush(*argPfile);
+
+
+}
+
 
 // print simulations details of cpn
 void print_simulation_details_cpn(char const * const input_file_name, CPN_Param const * const param, time_t const * const start_date, time_t const * const finish_date,

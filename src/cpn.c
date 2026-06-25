@@ -26,7 +26,11 @@ void real_main(char *input_file_name)
 	RNG_Param rng_state;
 	time_t start_date, finish_date;
 	clock_t start_time, finish_time;
-	FILE *datafilep, *swaptrackfilep, *topofilep, *coolfilep, *gradfilep;
+	FILE *datafilep, *swaptrackfilep, *topofilep, *coolfilep, *gradfilep, *argPcoolf, *argPgradf;
+        char argPcool[STD_STRING_LENGTH];
+        char argPgrad[STD_STRING_LENGTH]; 
+        char out_cool_conf[STD_STRING_LENGTH];
+        char out_grad_conf[STD_STRING_LENGTH]; 
 	int i;
 
 	// read input file
@@ -46,6 +50,12 @@ void real_main(char *input_file_name)
 
         // open gradient flow data file 
         init_grad_file(&gradfilep, &param); 
+
+        // open argPcool data file
+        init_argP_file(&argPcoolf, argPcool, &param); 
+
+        // open argPgrad data file 
+        init_argP_file(&argPgradf, argPgrad, &param); 
 
 	// open swap tracking file
 	init_swap_track_file(&swaptrackfilep, &param);
@@ -83,8 +93,10 @@ void real_main(char *input_file_name)
         // If d_MC_step == 0 perform the cooling and the gradient flow 
         if(param.d_MC_step == 0)
         {
-         	perform_measure_cooling(&(conf[0]), &geo, &param, coolfilep, &aux_conf); 
-                perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, &flow_conf, &aux_conf);
+         	perform_measure_cooling(&(conf[0]), &geo, &param, coolfilep, argPcoolf, &aux_conf); 
+                write_CPN_conf_on_file(&aux_conf, &param, out_cool_conf);
+                perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, argPgradf, &flow_conf, &aux_conf);
+                write_CPN_conf_on_file(&aux_conf, &param, out_grad_conf); 
         }
 
  	// Monte Carlo begins
@@ -136,8 +148,14 @@ void real_main(char *input_file_name)
 	// close topo file
 	fclose(topofilep);
 
+        // close gradient flow and 
         if (coolfilep != NULL) fclose(coolfilep);
 	if (gradfilep != NULL) fclose(gradfilep);
+
+
+        // close argPfile 
+        if (argPcoolf != NULL) fclose(argPcoolf);
+        if (argPgradf != NULL) fclose(argPgradf);
 
 	// close swap tracking file
 	end_swap_track_file(&swaptrackfilep, &param);
