@@ -27,10 +27,10 @@ void real_main(char *input_file_name)
 	time_t start_date, finish_date;
 	clock_t start_time, finish_time;
 	FILE *datafilep, *swaptrackfilep, *topofilep, *coolfilep, *gradfilep, *argPcoolf, *argPgradf;
-        char argPcool[STD_STRING_LENGTH];
-        char argPgrad[STD_STRING_LENGTH]; 
-        char out_cool_conf[STD_STRING_LENGTH];
-        char out_grad_conf[STD_STRING_LENGTH]; 
+        char argPcool[STD_STRING_LENGTH] = "argP_cool.dat"; 
+        char argPgrad[STD_STRING_LENGTH] = "argP_grad.dat";
+        char out_cool_conf[STD_STRING_LENGTH] = "out_cool_conf.dat"; 
+        char out_grad_conf[STD_STRING_LENGTH] = "out_grad_conf.dat"; 
 	int i;
 
 	// read input file
