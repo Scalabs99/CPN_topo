@@ -294,6 +294,50 @@ void read_input(char const * const input_file_name, CPN_Param *param)
                                 }
                                 strcpy(param->d_cool_file, temp_str); 
                         }
+			else if(strncmp(str, "argPcool_file", 13)==0)
+                        {
+
+                                err=fscanf(input_fp, "%s", temp_str); 
+                                if(err!=1)
+                                {
+                                        fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__); 
+                                        exit(EXIT_FAILURE); 
+
+                                }
+                                strcpy(param->d_argPcool_file, temp_str); 
+                        }
+			else if(strncmp(str, "argPgrad_file", 13)==0)
+                        {
+
+                                err=fscanf(input_fp, "%s", temp_str); 
+                                if(err!=1)
+                                {
+                                        fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__); 
+                                        exit(EXIT_FAILURE); 
+
+                                }
+                                strcpy(param->d_argPgrad_file, temp_str); 
+                        }
+			else if(strncmp(str, "outCoolconf_file", 16)==0)
+			{ 
+				err=fscanf(input_fp, "%s", temp_str);
+				if(err!=1)
+				{
+					fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__);
+					exit(EXIT_FAILURE);
+				}
+				strcpy(param->d_outCoolconf_file, temp_str);
+			}
+			else if(strncmp(str, "outGradconf_file", 16)==0)
+			{ 
+				err=fscanf(input_fp, "%s", temp_str);
+				if(err!=1)
+				{
+					fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__);
+					exit(EXIT_FAILURE);
+				}
+				strcpy(param->d_outGradconf_file, temp_str);
+			}
 			else if(strncmp(str, "log_file", 8)==0)
 			{ 
 				err=fscanf(input_fp, "%s", temp_str);
@@ -617,24 +661,46 @@ void init_grad_file(FILE **gradf, CPN_Param const * const param)
 
 }
 
-// initialize argP file ( use the same function both for the grad flow and the cooling ) 
-void init_argP_file(FILE **argPfile, char const * const file_name, CPN_Param const * const param)
+// initialize argP file for cooling 
+void init_argPcool_file(FILE **argPcoolf, CPN_Param const * const param)
 {
- 	*argPfile=fopen(file_name, "r");
-	if(*argPfile!=NULL) // file exists
+ 	*argPcoolf=fopen(param->d_argPcool_file, "r");
+	if(*argPcoolf!=NULL) // file exists
 	{
-		fclose(*argPfile);
-		*argPfile=fopen(file_name, "a");
+		fclose(*argPcoolf);
+		*argPcoolf=fopen(param->d_argPcool_file, "a");
 	}
 	else // file doesn't exist
 	{
 		int mu;
-		*argPfile=fopen(file_name, "w");
-		fprintf(*argPfile, "# %f ", param->d_beta);
-		for(mu=0; mu<2; mu++) fprintf(*argPfile, "%d ", param->d_size[mu]);
-		fprintf(*argPfile, "\n");
+		*argPcoolf=fopen(param->d_argPcool_file, "w");
+		fprintf(*argPcoolf, "# %f ", param->d_beta);
+		for(mu=0; mu<2; mu++) fprintf(*argPcoolf, "%d ", param->d_size[mu]);
+		fprintf(*argPcoolf, "\n");
 	}
-	fflush(*argPfile);
+	fflush(*argPcoolf);
+
+
+}
+
+// initialize argP file for cooling 
+void init_argPgrad_file(FILE **argPgradf, CPN_Param const * const param)
+{
+ 	*argPgradf=fopen(param->d_argPgrad_file, "r");
+	if(*argPgradf!=NULL) // file exists
+	{
+		fclose(*argPgradf);
+		*argPgradf=fopen(param->d_argPgrad_file, "a");
+	}
+	else // file doesn't exist
+	{
+		int mu;
+		*argPgradf=fopen(param->d_argPgrad_file, "w");
+		fprintf(*argPgradf, "# %f ", param->d_beta);
+		for(mu=0; mu<2; mu++) fprintf(*argPgradf, "%d ", param->d_size[mu]);
+		fprintf(*argPgradf, "\n");
+	}
+	fflush(*argPgradf);
 
 
 }

@@ -27,10 +27,6 @@ void real_main(char *input_file_name)
 	time_t start_date, finish_date;
 	clock_t start_time, finish_time;
 	FILE *datafilep, *swaptrackfilep, *topofilep, *coolfilep, *gradfilep, *argPcoolf, *argPgradf;
-        char argPcool[STD_STRING_LENGTH] = "argP_cool.dat"; 
-        char argPgrad[STD_STRING_LENGTH] = "argP_grad.dat";
-        char out_cool_conf[STD_STRING_LENGTH] = "out_cool_conf.dat"; 
-        char out_grad_conf[STD_STRING_LENGTH] = "out_grad_conf.dat"; 
 	int i;
 
 	// read input file
@@ -52,10 +48,10 @@ void real_main(char *input_file_name)
         init_grad_file(&gradfilep, &param); 
 
         // open argPcool data file
-        init_argP_file(&argPcoolf, argPcool, &param); 
+        init_argPcool_file(&argPcoolf, &param); 
 
         // open argPgrad data file 
-        init_argP_file(&argPgradf, argPgrad, &param); 
+        init_argPgrad_file(&argPgradf, &param); 
 
 	// open swap tracking file
 	init_swap_track_file(&swaptrackfilep, &param);
@@ -94,9 +90,9 @@ void real_main(char *input_file_name)
         if(param.d_MC_step == 0)
         {
          	perform_measure_cooling(&(conf[0]), &geo, &param, coolfilep, argPcoolf, &aux_conf); 
-                write_CPN_conf_on_file(&aux_conf, &param, out_cool_conf);
+                write_CPN_conf_on_file(&aux_conf, &param, param.d_outCoolconf_file);
                 perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, argPgradf, &flow_conf, &aux_conf);
-                write_CPN_conf_on_file(&aux_conf, &param, out_grad_conf); 
+                write_CPN_conf_on_file(&aux_conf, &param, param.d_outGradconf_file); 
         }
 
  	// Monte Carlo begins

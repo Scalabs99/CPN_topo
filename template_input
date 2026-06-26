@@ -33,11 +33,15 @@ grid_max 100                     # topo potential is defined for Q € [ -<grid_
 num_single_site_stoc_upd 2500    # number of stochastic single sites updates
 
 # file names
-conf_file                 istantone1.8.dat        # save conf for backup
+conf_file                 conf.dat                # save conf for backup
 data_file                 dati.dat                # save non-topological observables
 topo_file                 topo.dat                # save topological observables
 grad_file                 grad.dat                # save the observable for the gradient flow 
 cool_file                 cool.dat                # save the observable for the cooling 
+argPcool_file             argPcool.dat            # save the argP for the final cooling conf 
+argPgrad_file             argPgrad.dat            # save the argP for the final gradflow conf 
+outCoolconf_file          outCoolconf.dat         # save the final cooling configuration 
+outGradconf_file          outGradconf.dat         # save the final gradient flow configuration 
 log_file                  my_log.dat              # save simulations details
 rng_state_file            rng_state.dat           # save rng state
 swap_acc_file             swap_acc.dat            # save swap acceptances (parallel tempering only)

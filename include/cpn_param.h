@@ -66,10 +66,14 @@ typedef struct CPN_Param {
 	char d_topo_file[STD_STRING_LENGTH];				// topo data file name
         char d_grad_file[STD_STRING_LENGTH];                            // gradient flow file name 
         char d_cool_file[STD_STRING_LENGTH];                            // cooling file name 
-	char d_log_file[STD_STRING_LENGTH];			        // log file name
+	char d_argPcool_file[STD_STRING_LENGTH]; 			// argPcool file name
+        char d_argPgrad_file[STD_STRING_LENGTH]; 			// argPgradflow file name
+        char d_outCoolconf_file[STD_STRING_LENGTH]; 			// outCoolconf file name
+        char d_outGradconf_file[STD_STRING_LENGTH];		        // outGradconf file name 
+        char d_log_file[STD_STRING_LENGTH];			        // log file name
 	char d_swap_accept_file[STD_STRING_LENGTH];			// swap acceptances file
-	char d_swap_tracking_file[STD_STRING_LENGTH];		// swap history file
-	char d_multicanonic_acc_file[STD_STRING_LENGTH];	// multicanonical acceptances file	
+	char d_swap_tracking_file[STD_STRING_LENGTH];		        // swap history file
+	char d_multicanonic_acc_file[STD_STRING_LENGTH];	        // multicanonical acceptances file	
 	
 	// derived constants
 	long d_volume;	// total lattice volume
@@ -86,7 +90,8 @@ void init_data_file(FILE **, CPN_Param const * const);
 void init_topo_file(FILE **, CPN_Param const * const);
 void init_grad_file(FILE **, CPN_Param const * const); 
 void init_cool_file(FILE **, CPN_Param const * const); 
-void init_argP_file(FILE **, char const * const, CPN_Param const * const); 
+void init_argPcool_file(FILE **, CPN_Param const * const); 
+void init_argPgrad_file(FILE **, CPN_Param const * const); 
 void print_simulation_details_cpn(char const * const, CPN_Param const * const, time_t const * const, time_t const * const, clock_t const, clock_t const);
 void print_simulation_details_multicanonic_cpn(char const * const, CPN_Param const * const, time_t const * const, time_t const * const, clock_t const, clock_t const);
 
