@@ -48,8 +48,8 @@ typedef struct CPN_Param
 	// gradient flow parameters
 	double d_int_step;	 // integration step
 	double d_tollerance; // tollerance for the gradient flow procedure
-	double d_grad_steps;   // maximum number of gradient flow steps 
-	double d_gradevery;  // measure topological observables every <d_gradevery> gradient flow steps 
+	int d_grad_steps;   // maximum number of gradient flow steps 
+	int d_gradevery;  // measure topological observables every <d_gradevery> gradient flow steps 
 
 	// random number generator parameters
 	long d_seed;						// store rng seed

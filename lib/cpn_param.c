@@ -238,23 +238,23 @@ void read_input(char const *const input_file_name, CPN_Param *param)
 			}
 			else if (strncmp(str, "grad_steps", 10) == 0)
 			{
-				err = fscanf(input_fp, "%lf", &temp_d);
+				err = fscanf(input_fp, "%d", &temp_i);
 				if (err != 1)
 				{
 					fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__);
 					exit(EXIT_FAILURE);
 				}
-				param->d_grad_steps = temp_d;
+				param->d_grad_steps = temp_i;
 			}
 			else if (strncmp(str, "meas_grad_every", 15) == 0)
 			{
-				err = fscanf(input_fp, "%lf", &temp_d);
+				err = fscanf(input_fp, "%d", &temp_i);
 				if (err != 1)
 				{
 					fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__);
 					exit(EXIT_FAILURE);
 				}
-				param->d_gradevery = temp_d;
+				param->d_gradevery = temp_i;
 			}
 			else if (strncmp(str, "conf_file", 9) == 0)
 			{
