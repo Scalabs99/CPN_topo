@@ -5,32 +5,42 @@
 #include <time.h>
 
 // measure local observables on the periodic copy
-void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo, 
-                               CPN_Param const * const param, FILE *datafilep, FILE *topofilep, CPN_Conf *aux_conf)
+void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const geo,
+							   CPN_Param const *const param, FILE *datafilep, FILE *topofilep, FILE *topogradfilep, CPN_Conf *aux_conf)
 {
-	int cool_step=0, i;
+	int cool_step = 0, i, grad_step;
 	double magn_susc[2], Q[3], chi_p[3];
-	double energy; 
-        cmplx Pol_loop; // Polyakov loop; 
+	double energy;
+	cmplx Pol_loop; // Polyakov loop;
 
-	energy=energy_density(conf, geo, param);
+	energy = energy_density(conf, geo, param);
 	magnetic_susceptibility(conf, param, magn_susc);
-        Pol_loop = compute_Polyakov(conf, geo, param); 
+	Pol_loop = compute_Polyakov(conf, geo, param);
 
-	fprintf(datafilep, "%ld %.16lf %.16lf %.16lf %.16lf %.16lf\n", conf->update_index, energy, magn_susc[0], magn_susc[1], creal(Pol_loop), cimag(Pol_loop)); 
+	fprintf(datafilep, "%ld %.16lf %.16lf %.16lf %.16lf %.16lf\n", conf->update_index, energy, magn_susc[0], magn_susc[1], creal(Pol_loop), cimag(Pol_loop));
 	fflush(datafilep);
 
 	// compute topological observables of hot configuration
-	for (i=0; i<3; i++) // 1=geometric charge U, 2=geometric charge z, 3=non-geometric plaquette charge
+	for (i = 0; i < 3; i++) // 1=geometric charge U, 2=geometric charge z, 3=non-geometric plaquette charge
 	{
-	Q[i] = topo_charge(conf, geo, param, i); // compute topological charge using i^th discretization
-	chi_p[i] = chi_prime(conf, geo, param, i); // compute chi' using i^th discretization
-	}	
+		Q[i] = topo_charge(conf, geo, param, i);   // compute topological charge using i^th discretization
+		chi_p[i] = chi_prime(conf, geo, param, i); // compute chi' using i^th discretization
+	}
 	// print topological observable of hot configuration
 	fprintf(topofilep, "%ld %d", conf->update_index, cool_step);
-	for (i=0; i<3; i++) fprintf(topofilep, " %.16lf", Q[i]);
-	for (i=0; i<3; i++) fprintf(topofilep, " %.16lf", chi_p[i]);
+	for (i = 0; i < 3; i++)
+		fprintf(topofilep, " %.16lf", Q[i]);
+	for (i = 0; i < 3; i++)
+		fprintf(topofilep, " %.16lf", chi_p[i]);
 	fprintf(topofilep, "\n");
+
+	// print topological observable of hot configuration in the topograd file
+	fprintf(topogradfilep, "%ld %d", conf->update_index, cool_step);
+	for (i = 0; i < 3; i++)
+		fprintf(topogradfilep, " %.16lf", Q[i]);
+	for (i = 0; i < 3; i++)
+		fprintf(topogradfilep, " %.16lf", chi_p[i]);
+	fprintf(topogradfilep, "\n");
 
 	// refresh stored topo charge of periodic configuration (used only for multicanonic)
 	conf->stored_topo_charge = Q[0];
@@ -38,226 +48,300 @@ void perform_measures_localobs(CPN_Conf * conf, Geometry const * const geo,
 	// aux_conf = conf (used for cooling)
 	copyconf(conf, param, aux_conf);
 
-	// perform cooling on aux_conf, using the improved cooling function 
-	for (cool_step=1; cool_step<(param->d_coolsteps+1); cool_step++) 
-        { 
-		cooling_improved(aux_conf, geo, param); // perform 1 cooling step
-		if ( ( cool_step % param->d_coolevery ) == 0 ) // perform measures on cooled conf
-		{ 
+	// perform cooling on aux_conf, using the improved cooling function
+	for (cool_step = 1; cool_step < (param->d_coolsteps + 1); cool_step++)
+	{
+		cooling_improved(aux_conf, geo, param);	   // perform 1 cooling step
+		if ((cool_step % param->d_coolevery) == 0) // perform measures on cooled conf
+		{
 			// compute topological observables of cooled configuration
-			for (i=0; i<3; i++)
+			for (i = 0; i < 3; i++)
 			{
 				Q[i] = topo_charge(aux_conf, geo, param, i);
 				chi_p[i] = chi_prime(aux_conf, geo, param, i);
 			}
 			// print topological observable of cooled configuration
 			fprintf(topofilep, "%ld %d", conf->update_index, cool_step);
-			for (i=0; i<3; i++) fprintf(topofilep, " %.16lf", Q[i]);
-			for (i=0; i<3; i++) fprintf(topofilep, " %.16lf", chi_p[i]);
+			for (i = 0; i < 3; i++)
+				fprintf(topofilep, " %.16lf", Q[i]);
+			for (i = 0; i < 3; i++)
+				fprintf(topofilep, " %.16lf", chi_p[i]);
 			fprintf(topofilep, "\n");
 		}
 	}
 
+	// aux_conf = conf (gradient flow)
+	copyconf(conf, param, aux_conf);
+
+	// perform the gradient flow on aux_conf, using the gradient flow function
+	for (grad_step = 1; grad_step < (param->d_grad_steps + 1); grad_step++)
+	{
+		gradient_flow(aux_conf, flow_temp, geo, param); // perform 1 cooling step
+		if ((grad_step % param->d_gradevery) == 0)		// perform measures on cooled conf
+		{
+			// compute topological observables of cooled configuration
+			for (i = 0; i < 3; i++)
+			{
+				Q[i] = topo_charge(aux_conf, geo, param, i);
+				chi_p[i] = chi_prime(aux_conf, geo, param, i);
+			}
+			// print topological observable of cooled configuration
+			fprintf(topogradfilep, "%ld %d", conf->update_index, grad_step);
+			for (i = 0; i < 3; i++)
+				fprintf(topogradfilep, " %.16lf", Q[i]);
+			for (i = 0; i < 3; i++)
+				fprintf(topogradfilep, " %.16lf", chi_p[i]);
+			fprintf(topogradfilep, "\n");
+		}
+	}
+
 	fflush(topofilep);
+	fflush(topogradfilep);
 }
 
-void perform_measure_gradient_flow(CPN_Conf const * const conf, Geometry const * const geo, 
-                               CPN_Param const * const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
+void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *const geo,
+								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
-        int i;        
-        double energy, energy_in, energy_out; 
-        double Q[3]; 
-        long Lx = param->d_size[1]; 
-        long j; 
-        double arg_P; 
+	int i;
+	double energy, energy_in, energy_out;
+	double Q[3];
+	long Lx = param->d_size[1];
+	long j;
+	double arg_P;
 
+	// aux_conf = conf ( we work on the aux conf and not on the conf )
+	copyconf(conf, param, aux_conf);
 
-        // aux_conf = conf ( we work on the aux conf and not on the conf ) 
-        copyconf(conf, param, aux_conf); 
+	// compute and print the energy and the topological charge of the conf before the gradient flow
+	energy = energy_density(aux_conf, geo, param);
 
-        // compute and print the energy and the topological charge of the conf before the gradient flow
-        energy = energy_density(aux_conf, geo, param); 
-        
-        for (i=0; i<3; i++)
+	for (i = 0; i < 3; i++)
 	{
-	     Q[i] = topo_charge(aux_conf, geo, param, i);
-		  
-	}
-        
-        fprintf(gradfilep, "%.16lf", energy);  
-        for (i=0; i<3; i++) fprintf(gradfilep, " %.16lf", Q[i]);
-        fprintf(gradfilep, "\n"); 
-
-        fflush(gradfilep); 
-        
-        // Initialize energy_out with the value of energy 
-        energy_out = energy; 
-       
-
-        // perform gradient flow 
-        do { 
-             
-             // compute the energy before the integration step 
-             energy_in = energy_out; 
-
-             // perform the integration step 
-             gradient_flow(aux_conf, flow_temp, geo, param); 
- 
-             // compute the energy after the integration step 
-             energy_out = energy_density(aux_conf, geo, param); 
-             
-             // compute the topological charge of the configuration after the integration step 
-             for (i=0; i<3; i++)
-	     {
-	          Q[i] = topo_charge(aux_conf, geo, param, i);
-		  
-	     }
- 
-             // print the energy and the topological charge of the out configuration 
-             fprintf(gradfilep, "%.16lf", energy_out);  
-             for (i=0; i<3; i++) fprintf(gradfilep, " %.16lf", Q[i]);
-             fprintf(gradfilep, "\n"); 
-
-             fflush(gradfilep); 
-        
-
-        }
-        while (fabs(energy_out-energy_in) > (param->d_tollerance)); 
-
-        // compute the argP(n_x) on the final configuration       
-        for(j=0; j<Lx; j++)
-        {
-         	arg_P = compute_arg_Pol(aux_conf, geo, param, j);
-                fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
-                fflush(argPfilep); 
-        }
-
-
-        
-        
-} 
-
-void perform_measure_cooling(CPN_Conf const * const conf, Geometry const * const geo, 
-                               CPN_Param const * const param, FILE *coolfilep, FILE *argPfilep, CPN_Conf *aux_conf)
-{
- 	int i; 
-        double energy, energy_in, energy_out; 
-        double Q[3]; 
-        long Lx = param->d_size[1];
-        long j;  
-        double arg_P;  
- 
-
-        // aux_conf = conf we work on the aux_conf 
-        copyconf(conf, param, aux_conf); 
-
-        // compute the energy 
-        energy = energy_density(aux_conf, geo, param); 
-
-	for (i=0; i<3; i++)
-	{
-	     Q[i] = topo_charge(aux_conf, geo, param, i);
-		  
+		Q[i] = topo_charge(aux_conf, geo, param, i);
 	}
 
-	fprintf(coolfilep, "%.16lf", energy);  
-        for (i=0; i<3; i++) fprintf(coolfilep, " %.16lf", Q[i]);
-        fprintf(coolfilep, "\n"); 
+	fprintf(gradfilep, "%.16lf", energy);
+	for (i = 0; i < 3; i++)
+		fprintf(gradfilep, " %.16lf", Q[i]);
+	fprintf(gradfilep, "\n");
 
-        // Forces the writing of the first value on the file 
-        fflush(coolfilep);
-        
-        // Initialize energy_out with the value of energy 
-        energy_out = energy; 
+	fflush(gradfilep);
 
- 	 do { 
-             
-             // compute the energy before the integration step 
-             energy_in = energy_out; 
+	// Initialize energy_out with the value of energy
+	energy_out = energy;
 
-             // perform the cooling step
-             cooling_improved(aux_conf, geo, param); 
- 
-             // compute the energy after the integration step 
-             energy_out = energy_density(aux_conf, geo, param); 
-             
-             // compute the topological charge of the configuration after the cooling step 
-             for (i=0; i<3; i++)
-	     {
-	          Q[i] = topo_charge(aux_conf, geo, param, i);
-		  
-	     }
- 
-             // print the energy and the topological charge of the out configuration 
-             fprintf(coolfilep, "%.16lf", energy_out);  
-             for (i=0; i<3; i++) fprintf(coolfilep, " %.16lf", Q[i]);
-             fprintf(coolfilep, "\n"); 
+	// perform gradient flow
+	do
+	{
 
-             fflush(coolfilep); 
-        
+		// compute the energy before the integration step
+		energy_in = energy_out;
 
-        }
-        while (fabs(energy_out-energy_in) > (param->d_tollerance)); 
+		// perform the integration step
+		gradient_flow(aux_conf, flow_temp, geo, param);
 
-  
-        // compute the argP(n_x) on the final configuration       
-        for(j=0; j<Lx; j++)
-        {
-         	arg_P = compute_arg_Pol(aux_conf, geo, param, j);
-                fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
-                fflush(argPfilep); 
-        }
+		// compute the energy after the integration step
+		energy_out = energy_density(aux_conf, geo, param);
 
-        
-        
-        
+		// compute the topological charge of the configuration after the integration step
+		for (i = 0; i < 3; i++)
+		{
+			Q[i] = topo_charge(aux_conf, geo, param, i);
+		}
+
+		// print the energy and the topological charge of the out configuration
+		fprintf(gradfilep, "%.16lf", energy_out);
+		for (i = 0; i < 3; i++)
+			fprintf(gradfilep, " %.16lf", Q[i]);
+		fprintf(gradfilep, "\n");
+
+		fflush(gradfilep);
+
+	} while (fabs(energy_out - energy_in) > (param->d_tollerance));
+
+	// compute the argP(n_x) on the final configuration
+	for (j = 0; j < Lx; j++)
+	{
+		arg_P = compute_arg_Pol(aux_conf, geo, param, j);
+		fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
+		fflush(argPfilep);
+	}
+
+	// save forces computed on the final configuration
+	FILE *f_force_grad = fopen("final_forces_grad.dat", "w");
+	if (f_force_grad != NULL)
+	{
+		fprintf(f_force_grad, "# x \t y \t |F_z|^2 \t |F_U|^2\n");
+		for (i = 0; i < param->d_volume; i++)
+		{
+			long cart[2];
+			si_to_cart(cart, i, param);
+
+			double fz_sq = 0.0;
+			double fu_sq = 0.0;
+			int mu;
+
+			// Compute z force on site i
+			cmplx f_z_array[N] __attribute__((aligned(DOUBLE_ALIGN)));
+			force_z(aux_conf, geo, i, f_z_array);
+			fz_sq = vector_norm(f_z_array); // squared modulus of F_z
+
+			// Compute the U force on site i, and sum over the links (mu=0 and mu=1)
+			for (mu = 0; mu < 2; mu++)
+			{
+				cmplx fu_val = force_U(aux_conf, geo, param, i, mu);
+				fu_sq += cmplx_norm(fu_val); // sum the squared modulus over mu;
+			}
+
+			fprintf(f_force_grad, "%ld \t %ld \t %.16le \t %.16le\n", cart[0], cart[1], fz_sq, fu_sq);
+		}
+		fclose(f_force_grad);
+	}
+}
+
+void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const geo,
+							 CPN_Param const *const param, FILE *coolfilep, FILE *argPfilep, CPN_Conf *aux_conf)
+{
+	int i;
+	double energy, energy_in, energy_out;
+	double Q[3];
+	long Lx = param->d_size[1];
+	long j;
+	double arg_P;
+
+	// aux_conf = conf we work on the aux_conf
+	copyconf(conf, param, aux_conf);
+
+	// compute the energy
+	energy = energy_density(aux_conf, geo, param);
+
+	for (i = 0; i < 3; i++)
+	{
+		Q[i] = topo_charge(aux_conf, geo, param, i);
+	}
+
+	fprintf(coolfilep, "%.16lf", energy);
+	for (i = 0; i < 3; i++)
+		fprintf(coolfilep, " %.16lf", Q[i]);
+	fprintf(coolfilep, "\n");
+
+	// Forces the writing of the first value on the file
+	fflush(coolfilep);
+
+	// Initialize energy_out with the value of energy
+	energy_out = energy;
+
+	do
+	{
+
+		// compute the energy before the integration step
+		energy_in = energy_out;
+
+		// perform the cooling step
+		cooling_improved(aux_conf, geo, param);
+
+		// compute the energy after the integration step
+		energy_out = energy_density(aux_conf, geo, param);
+
+		// compute the topological charge of the configuration after the cooling step
+		for (i = 0; i < 3; i++)
+		{
+			Q[i] = topo_charge(aux_conf, geo, param, i);
+		}
+
+		// print the energy and the topological charge of the out configuration
+		fprintf(coolfilep, "%.16lf", energy_out);
+		for (i = 0; i < 3; i++)
+			fprintf(coolfilep, " %.16lf", Q[i]);
+		fprintf(coolfilep, "\n");
+
+		fflush(coolfilep);
+
+	} while (fabs(energy_out - energy_in) > (param->d_tollerance));
+
+	// compute the argP(n_x) on the final configuration
+	for (j = 0; j < Lx; j++)
+	{
+		arg_P = compute_arg_Pol(aux_conf, geo, param, j);
+		fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
+		fflush(argPfilep);
+	}
+    
+	// repeat the same procedure for the cooling routine 
+	FILE *f_force_cool = fopen("final_forces_cool.dat", "w");
+	if (f_force_cool != NULL)
+	{
+		fprintf(f_force_cool, "# x \t y \t |F_z|^2 \t |F_U|^2\n");
+		for (i = 0; i < param->d_volume; i++)
+		{
+			long cart[2];
+			si_to_cart(cart, i, param);
+
+			double fz_sq = 0.0;
+			double fu_sq = 0.0;
+			int mu;
+
+			// Compute z force on site i
+			cmplx f_z_array[N] __attribute__((aligned(DOUBLE_ALIGN)));
+			force_z(aux_conf, geo, i, f_z_array);
+			fz_sq = vector_norm(f_z_array); // squared modulus of F_z
+
+			// Compute the U force on site i, and sum over the links (mu=0 and mu=1)
+			for (mu = 0; mu < 2; mu++)
+			{
+				cmplx fu_val = force_U(aux_conf, geo, param, i, mu);
+				fu_sq += cmplx_norm(fu_val); // sum the squared modulus over mu;
+			}
+
+			fprintf(f_force_cool, "%ld \t %ld \t %.16le \t %.16le\n", cart[0], cart[1], fz_sq, fu_sq);
+		}
+		fclose(f_force_cool);
+	}
 }
 
 // compute plaquette Pi_{mu nu}(i) on site i and plane (mu,nu)
 // Pi_{mu nu}(i) = U(i)_mu U(i+mu)_nu conj( U(i+nu) )_mu conj( U(i) )_nu
-cmplx plaquette(CPN_Conf const * const conf, Geometry const * const geo, long const i, int const mu, int const nu)
+cmplx plaquette(CPN_Conf const *const conf, Geometry const *const geo, long const i, int const mu, int const nu)
 {
-	return( conf->U[i][mu] * conf->U[geo->up[i][mu]][nu] * conj(conf->U[geo->up[i][nu]][mu]) * conj(conf->U[i][nu]) );
+	return (conf->U[i][mu] * conf->U[geo->up[i][mu]][nu] * conj(conf->U[geo->up[i][nu]][mu]) * conj(conf->U[i][nu]));
 }
 
-// compute the energy density for single link E = S_{Symanzik}(theta=0) / (2 V N beta) with TBCs 
-double energy_density(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param const * const param) 
-{ 
+// compute the energy density for single link E = S_{Symanzik}(theta=0) / (2 V N beta) with TBCs
+double energy_density(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param)
+{
 	int i, mu;
 	double e = 0.0;
-	cmplx e1 = 0.0 + I * 0.0, e2 = 0.0 + I * 0.0; 
+	cmplx e1 = 0.0 + I * 0.0, e2 = 0.0 + I * 0.0;
 	cmplx aux1, aux2;
 
-	for (i=0; i<param->d_volume; i++) 
-	{ 
-		for(mu=0 ; mu<2 ; mu++)
+	for (i = 0; i < param->d_volume; i++)
+	{
+		for (mu = 0; mu < 2; mu++)
 		{
-			aux1=vector_scalar_product_matrix(conf->z[geo->up[i][mu]], conf->z[i], conf->M1[i][mu]); // conj( z(i+mu) )* conj( M1(i)_mu ) * z(i)
+			aux1 = vector_scalar_product_matrix(conf->z[geo->up[i][mu]], conf->z[i], conf->M1[i][mu]); // conj( z(i+mu) )* conj( M1(i)_mu ) * z(i)
 			e1 += conj(conf->U[i][mu]) * aux1;
 
-			aux2=vector_scalar_product_matrix(conf->z[geo->up[geo->up[i][mu]][mu]], conf->z[i], conf->M2[i][mu]); // conj( z(i+2mu) ) * conj( M2(i)_mu ) * z(i)
-			e2 += conj(conf->U[geo->up[i][mu]][mu] * conf->U[i][mu]) * aux2; 
+			aux2 = vector_scalar_product_matrix(conf->z[geo->up[geo->up[i][mu]][mu]], conf->z[i], conf->M2[i][mu]); // conj( z(i+2mu) ) * conj( M2(i)_mu ) * z(i)
+			e2 += conj(conf->U[geo->up[i][mu]][mu] * conf->U[i][mu]) * aux2;
 		}
 	}
 
-	e = 2.0*(c1*creal(e1) + c2*creal(e2)); 
+	e = 2.0 * (c1 * creal(e1) + c2 * creal(e2));
 	e /= (double)(param->d_volume);
-	e = 2.0*(c1 + c2) - e/2.0;
-	return e; 
+	e = 2.0 * (c1 + c2) - e / 2.0;
+	return e;
 }
 
-
-
 // compute the geometric topological charge density expressed in terms of the scalar field z on site i
-double geo_topo_charge_z_density(CPN_Conf const * const conf, Geometry const * const geo, long const i)
+double geo_topo_charge_z_density(CPN_Conf const *const conf, Geometry const *const geo, long const i)
 {
 	cmplx aux_1, aux_2, aux_3, p1, p2;
-	double q; 
-	int mu=0;
-	int nu=1-mu; 
+	double q;
+	int mu = 0;
+	int nu = 1 - mu;
 
-	aux_1 = vector_scalar_product(conf->z[geo->up[ geo->up[i][mu]][nu]], conf->z[i]);
-	aux_2 = vector_scalar_product(conf->z[geo->up[i][mu]], conf->z[geo->up[geo->up[i][mu]][nu] ]);
+	aux_1 = vector_scalar_product(conf->z[geo->up[geo->up[i][mu]][nu]], conf->z[i]);
+	aux_2 = vector_scalar_product(conf->z[geo->up[i][mu]], conf->z[geo->up[geo->up[i][mu]][nu]]);
 	aux_3 = vector_scalar_product(conf->z[i], conf->z[geo->up[i][mu]]);
 	p1 = aux_1 * aux_2 * aux_3;
 
@@ -266,47 +350,59 @@ double geo_topo_charge_z_density(CPN_Conf const * const conf, Geometry const * c
 	aux_3 = vector_scalar_product(conf->z[i], conf->z[geo->up[geo->up[i][mu]][nu]]);
 	p2 = aux_1 * aux_2 * aux_3;
 
-	q = -1.0 * ( arg(p1) + arg(p2) ) / (2.0*pi);
+	q = -1.0 * (arg(p1) + arg(p2)) / (2.0 * pi);
 	return q;
 }
 
 // compute the geometric topological charge expressed in terms of the gauge field U on site i
-double geo_topo_charge_U_density(CPN_Conf const * const conf, Geometry const * const geo, long const i)
+double geo_topo_charge_U_density(CPN_Conf const *const conf, Geometry const *const geo, long const i)
 {
-	int mu=0;
-	int nu=1-mu;
+	int mu = 0;
+	int nu = 1 - mu;
 	cmplx plaq;
 	double q;
 
 	plaq = plaquette(conf, geo, i, mu, nu); // Plaq = plaquette(i)_{01}
-	q = arg(plaq) / (2.0*pi); // {Im log(plaq) } / (2 pi)
+	q = arg(plaq) / (2.0 * pi);				// {Im log(plaq) } / (2 pi)
 	return q;
 }
 
 // compute the non-geometric topological charge expressed in terms of the plaquettes on site i
-double plaq_topo_charge_density(CPN_Conf const * const conf, Geometry const * const geo, long const i)
+double plaq_topo_charge_density(CPN_Conf const *const conf, Geometry const *const geo, long const i)
 {
-	int mu=0;
-	int nu=1-mu;
+	int mu = 0;
+	int nu = 1 - mu;
 	double q;
 
-	q = cimag( plaquette(conf, geo, i, mu, nu) ); // Im{ plaquette(i)_{01} } 
-	q /= (2.0*pi); 
+	q = cimag(plaquette(conf, geo, i, mu, nu)); // Im{ plaquette(i)_{01} }
+	q /= (2.0 * pi);
 	return q;
 }
 
 // compute the total topological charge
-double topo_charge(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param const * const param, int const which_charge)
+double topo_charge(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, int const which_charge)
 {
 	// pointer to desired discretization of the topological charge density
-	double (*q_ptr)(CPN_Conf const * const, Geometry const * const, long const);
-	if (which_charge==0) {q_ptr = &geo_topo_charge_U_density;}
-	if (which_charge==1) {q_ptr = &geo_topo_charge_z_density;}
-	if (which_charge==2) {q_ptr = &plaq_topo_charge_density;}
+	double (*q_ptr)(CPN_Conf const *const, Geometry const *const, long const);
+	if (which_charge == 0)
+	{
+		q_ptr = &geo_topo_charge_U_density;
+	}
+	if (which_charge == 1)
+	{
+		q_ptr = &geo_topo_charge_z_density;
+	}
+	if (which_charge == 2)
+	{
+		q_ptr = &plaq_topo_charge_density;
+	}
 
-	double Q = 0.0; 
-	long i; 
-	for(i=0; i<param->d_volume; i++) {Q += ((*q_ptr)(conf, geo, i));} // Q = sum_i { q(i) }
+	double Q = 0.0;
+	long i;
+	for (i = 0; i < param->d_volume; i++)
+	{
+		Q += ((*q_ptr)(conf, geo, i));
+	} // Q = sum_i { q(i) }
 	return Q;
 }
 
@@ -314,23 +410,32 @@ double topo_charge(CPN_Conf const * const conf, Geometry const * const geo, CPN_
 // the mean value of this sum in the continuum limit is chi' = (1/4) \int d^2x |x|^2 <q(x)q(0)> and is related to the first derivative with respect to k=p^2 of
 // the Fourier transform FG of the topological charge density correlator: chi' = - (1/4) lim_{k->0} d FG(k) / dk
 // where FG(p^2) = \int d^2 x e^(ipx) <q(x)q(0)>
-double chi_prime(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param const * const param, int const which_charge)
+double chi_prime(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, int const which_charge)
 {
 	// pointer to desired discretization of the topological charge density
-	double (*q_ptr)(CPN_Conf const * const, Geometry const * const, long const);
-	if (which_charge==0) {q_ptr = &geo_topo_charge_U_density;}
-	if (which_charge==1) {q_ptr = &geo_topo_charge_z_density;}
-	if (which_charge==2) {q_ptr = &plaq_topo_charge_density;}
+	double (*q_ptr)(CPN_Conf const *const, Geometry const *const, long const);
+	if (which_charge == 0)
+	{
+		q_ptr = &geo_topo_charge_U_density;
+	}
+	if (which_charge == 1)
+	{
+		q_ptr = &geo_topo_charge_z_density;
+	}
+	if (which_charge == 2)
+	{
+		q_ptr = &plaq_topo_charge_density;
+	}
 
 	double d2, G = 0.0;
 	long i;
-	for (i=0; i<param->d_volume; i++)
+	for (i = 0; i < param->d_volume; i++)
 	{
-		d2 = square_distance(i, 0, param); // i->x ==> d2 = d(x,0)^2 = |x|^2 = |i|^2 where distance is computed on the torus
-		G += ((*q_ptr)(conf, geo, i))*d2; // sum_i { q(i) |i|^2 }
+		d2 = square_distance(i, 0, param);	// i->x ==> d2 = d(x,0)^2 = |x|^2 = |i|^2 where distance is computed on the torus
+		G += ((*q_ptr)(conf, geo, i)) * d2; // sum_i { q(i) |i|^2 }
 	}
-	G *= ((*q_ptr)(conf, geo, 0));  // sum_i { q(i)q(0) |i|^2 }
-	G /= 4.0; // G = (1/4) sum_i { q(i)q(0) |i|^2 }
+	G *= ((*q_ptr)(conf, geo, 0)); // sum_i { q(i)q(0) |i|^2 }
+	G /= 4.0;					   // G = (1/4) sum_i { q(i)q(0) |i|^2 }
 	return G;
 }
 
@@ -340,27 +445,29 @@ double chi_prime(CPN_Conf const * const conf, Geometry const * const geo, CPN_Pa
 // magnetic susceptibility at p=0: chi_m(0) = <G(p=0)> (this quantity is trivially real)
 // magnetic susceptibility at p=q: chi_m(q) = <G(p=q)> (here I take just the real part, as the imaginary part averages to zero over the ensamble)
 // mang_susc[0] = G(p=0), magn_susc[1]=G(p=q), the correlation length of the system can be expressed in terms of chi_m(q)/chi_m(0)
-void magnetic_susceptibility(CPN_Conf const * const conf, CPN_Param const * const param, double * magn_susc)
-{ 
+void magnetic_susceptibility(CPN_Conf const *const conf, CPN_Param const *const param, double *magn_susc)
+{
 	int i;
-	double L, sum1=0.0, q;
+	double L, sum1 = 0.0, q;
 	cmplx a;
 	cmplx sum2 = 0.0 + I * 0.0;
 	long x[2];
 
 	// L = min(Lx,Lt)
-	if (param->d_size[0] > param->d_size[1]) L = ( (double) param->d_size[1] ); 
-	else L = ( (double) param->d_size[0] );
-	q = 2.0*pi/L;
+	if (param->d_size[0] > param->d_size[1])
+		L = ((double)param->d_size[1]);
+	else
+		L = ((double)param->d_size[0]);
+	q = 2.0 * pi / L;
 
-	for(i=0; i<param->d_volume; i++)
+	for (i = 0; i < param->d_volume; i++)
 	{
-		a=vector_scalar_product(conf->z[i], conf->z[0]);
-		sum1 += cmplx_norm(a);		
+		a = vector_scalar_product(conf->z[i], conf->z[0]);
+		sum1 += cmplx_norm(a);
 		si_to_cart(x, i, param); // i->x
-		sum2 += ( cmplx_norm(a) - 1.0/((double)N) )*cexp( I * ( q * ( (double)x[0] ) ));
+		sum2 += (cmplx_norm(a) - 1.0 / ((double)N)) * cexp(I * (q * ((double)x[0])));
 	}
-	sum1 -= ((double)(param->d_volume))/((double)N);
+	sum1 -= ((double)(param->d_volume)) / ((double)N);
 
 	magn_susc[0] = sum1;
 	magn_susc[1] = creal(sum2);
@@ -369,166 +476,153 @@ void magnetic_susceptibility(CPN_Conf const * const conf, CPN_Param const * cons
 // perform a single cooling step on the given conf (this function should receive an aux conf)
 // cooling = each field is aligned to its local force: z = F_z / |F_z|, U = F_U / |F_U|
 // forces are determined using the non-improved lattice action S_L \propto sum_{i, mu} U(i)_mu conj(z)(i+mu) z(i)
-void cooling (CPN_Conf *conf, Geometry const * const geo, CPN_Param const * const param) 
-{ 
+void cooling(CPN_Conf *conf, Geometry const *const geo, CPN_Param const *const param)
+{
 	int i, mu;
-	cmplx F_U; 
+	cmplx F_U;
 	cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
-	cmplx aux[N] __attribute__((aligned(DOUBLE_ALIGN))); 
+	cmplx aux[N] __attribute__((aligned(DOUBLE_ALIGN)));
 
 	// cool U fields
-	for (i=0; i<param->d_volume ; i++) 
+	for (i = 0; i < param->d_volume; i++)
 	{
-		for(mu=0 ; mu<2 ; mu++)
+		for (mu = 0; mu < 2; mu++)
 		{
-		F_U=vector_scalar_product(conf->z[geo->up[i][mu]], conf->z[i]); // F_U = conj(z(i+mu)) z(i)
-		conf->U[i][mu] = F_U / cmplx_abs(F_U); // align U along the local force on link (i,mu): U = F_U/|F_U|
+			F_U = vector_scalar_product(conf->z[geo->up[i][mu]], conf->z[i]); // F_U = conj(z(i+mu)) z(i)
+			conf->U[i][mu] = F_U / cmplx_abs(F_U);							  // align U along the local force on link (i,mu): U = F_U/|F_U|
 		}
 	}
 
 	// cool z fields
-	for (i=0; i<param->d_volume; i++)
+	for (i = 0; i < param->d_volume; i++)
 	{
 		vector_zero(F_z); // F_z = 0
-		for (mu=0; mu<2; mu++)
+		for (mu = 0; mu < 2; mu++)
 		{
 			// aux = U(i)_mu * z(i+mu) + conj( U(i-mu)_mu ) * z(i-mu)
 			vector_linear_combination_cmplx_coeff(aux, conf->z[geo->up[i][mu]], conf->z[geo->dn[i][mu]], conf->U[i][mu], conj(conf->U[geo->dn[i][mu]][mu]));
 			vector_sum(F_z, aux); // F_z += aux;
 		}
-		vector_normalization(F_z); // F_z -> F_z/|F_z|
+		vector_normalization(F_z);	   // F_z -> F_z/|F_z|
 		vector_equal(conf->z[i], F_z); // align z along the local force on site i: z = F_z/|F_z|
 	}
 }
 
-// perform a single cooling step on the given conf (this function should receive an aux conf) 
-// cooling = each field is aligned to its local force: z = F_z / |F_z|, U = F_U / |F_U| 
-// forces are determined using the improved lattice action ( Symanzik ) with TBC 
-void cooling_improved ( CPN_Conf *conf, Geometry const * const geo, CPN_Param const * const param) 
-{ 
+// perform a single cooling step on the given conf (this function should receive an aux conf)
+// cooling = each field is aligned to its local force: z = F_z / |F_z|, U = F_U / |F_U|
+// forces are determined using the improved lattice action ( Symanzik ) with TBC
+void cooling_improved(CPN_Conf *conf, Geometry const *const geo, CPN_Param const *const param)
+{
 	int i, mu;
-	cmplx F_U; 
+	cmplx F_U;
 	cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
 
 	// cool U fields
-	for (i=0; i<param->d_volume ; i++) 
+	for (i = 0; i < param->d_volume; i++)
 	{
-		for(mu=0 ; mu<2 ; mu++)
+		for (mu = 0; mu < 2; mu++)
 		{
-		     F_U=force_U(conf, geo, param, i, mu); // compute the force using the improved formula; 
-		     conf->U[i][mu] = F_U / cmplx_abs(F_U); // align U along the local force on link (i,mu): U = F_U/|F_U|
+			F_U = force_U(conf, geo, param, i, mu); // compute the force using the improved formula;
+			conf->U[i][mu] = F_U / cmplx_abs(F_U);	// align U along the local force on link (i,mu): U = F_U/|F_U|
 		}
 	}
 
 	// cool z fields
-	for (i=0; i<param->d_volume; i++)
+	for (i = 0; i < param->d_volume; i++)
 	{
-		force_z(conf, geo, i, F_z); // compute the force using the improved formula; 	
-		vector_normalization(F_z); // F_z -> F_z/|F_z|
+		force_z(conf, geo, i, F_z);	   // compute the force using the improved formula;
+		vector_normalization(F_z);	   // F_z -> F_z/|F_z|
 		vector_equal(conf->z[i], F_z); // align z along the local force on site i: z = F_z/|F_z|
 	}
 }
 
-// Perform a single integration step for the gradient flow equations 
-// The integration scheme is the simple Euler scheme 
-void gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const * const geo, CPN_Param const * const param) 
+// Perform a single integration step for the gradient flow equations
+// The integration scheme is the simple Euler scheme
+void gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const geo, CPN_Param const *const param)
 {
-        int i, mu; 
-        double c = 2.0 * (param->d_beta) * N * (param->d_int_step); 
-        cmplx F_U;    
-        cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	int i, mu;
+	double c = 2.0 * (param->d_beta) * N * (param->d_int_step);
+	cmplx F_U;
+	cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
 
-        for (i=0; i<param->d_volume; i++)
-        {       
-                // Compute the force F_U and the Euler evolution step 
-                for (mu=0; mu<2; mu++)
-                { 
-                       F_U = force_U(conf, geo, param, i, mu); 
-	               flow_temp->U[i][mu] = conf->U[i][mu] + c * F_U; // save the updated link variable U
-                       flow_temp->U[i][mu] = flow_temp->U[i][mu] / cmplx_abs(flow_temp->U[i][mu]); 
-                }     
+	for (i = 0; i < param->d_volume; i++)
+	{
+		// Compute the force F_U and the Euler evolution step
+		for (mu = 0; mu < 2; mu++)
+		{
+			F_U = force_U(conf, geo, param, i, mu);
+			flow_temp->U[i][mu] = conf->U[i][mu] + c * F_U; // save the updated link variable U
+			flow_temp->U[i][mu] = flow_temp->U[i][mu] / cmplx_abs(flow_temp->U[i][mu]);
+		}
 
-                // Compute the force F_z and the Euler evolution step
-                force_z(conf, geo, i, F_z); 
-                vector_times_real_const(F_z, c); 
-                
-                // Assign the value of conf->z[i] to flow_temp->z[i] 
-                vector_equal(flow_temp->z[i], conf->z[i]);
+		// Compute the force F_z and the Euler evolution step
+		force_z(conf, geo, i, F_z);
+		vector_times_real_const(F_z, c);
 
-                // Euler step 
-                vector_sum(flow_temp->z[i], F_z);   
-                
-                // normalize z[i] and U[i][mu]
-                vector_normalization(flow_temp->z[i]);
-           
-               
-                
-        }
+		// Assign the value of conf->z[i] to flow_temp->z[i]
+		vector_equal(flow_temp->z[i], conf->z[i]);
 
-        for (i = 0; i < param->d_volume; i++)
-        {
-               vector_equal(conf->z[i], flow_temp->z[i]);
-               conf->U[i][0] = flow_temp->U[i][0];
-               conf->U[i][1] = flow_temp->U[i][1];
-        }
+		// Euler step
+		vector_sum(flow_temp->z[i], F_z);
 
-        
-} 
+		// normalize z[i] and U[i][mu]
+		vector_normalization(flow_temp->z[i]);
+	}
 
-// compute the arg(P(n_x)) for the cooled ( either with GF or cooling ) configuration 
-double compute_arg_Pol(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param const * const param, long const i)
-{
- 	double arg_pol = 0.0; 
-        long j, r; 
-        int Lt = param->d_size[0];
-        long cart_coord[2] = {0, i}; 
-        r = cart_to_si(cart_coord, param); 
-        cmplx temp = 1.0; 
-                
-        for (j=0; j<Lt; j++)
-        {
-         	temp *= conf->U[r][0];    
-         	r = geo->up[r][0]; // jump to the next site ( in the 0 direction ) 
-                    
-        } 
-
-        arg_pol = arg(temp); 
-        return arg_pol; 
-        
-        	
+	for (i = 0; i < param->d_volume; i++)
+	{
+		vector_equal(conf->z[i], flow_temp->z[i]);
+		conf->U[i][0] = flow_temp->U[i][0];
+		conf->U[i][1] = flow_temp->U[i][1];
+	}
 }
 
-
-
-// compute the spatially averaged Polyakov loop; 
-cmplx compute_Polyakov(CPN_Conf const * const conf, Geometry const * const geo, CPN_Param const * const param)
+// compute the arg(P(n_x)) for the cooled ( either with GF or cooling ) configuration
+double compute_arg_Pol(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, long const i)
 {
-        
-    cmplx Pol = 0.0; // spatially averaged Polyakov loop
-    int Lx = param->d_size[1]; 
-    int Lt = param->d_size[0]; 
-       
-    long i, j, r; 
-    for (i=0; i<Lx; i++)
-    {       
-        cmplx temp = 1.0; // initialize temp = 1 + 0i; 
-        long cart_coord[2] = {0, i}; 
-        r = cart_to_si(cart_coord, param); 
-                
-        for (j=0; j<Lt; j++)
-        {
-             temp *= conf->U[r][0];    
-             r = geo->up[r][0]; // jump to the next site ( in the 0 direction ) 
-                    
-        } 
-                
-        Pol += temp; 
-          
-    }
-      
-    Pol = Pol / Lx; 
-    return Pol; 
-}  
+	double arg_pol = 0.0;
+	long j, r;
+	int Lt = param->d_size[0];
+	long cart_coord[2] = {0, i};
+	r = cart_to_si(cart_coord, param);
+	cmplx temp = 1.0;
 
+	for (j = 0; j < Lt; j++)
+	{
+		temp *= conf->U[r][0];
+		r = geo->up[r][0]; // jump to the next site ( in the 0 direction )
+	}
+
+	arg_pol = arg(temp);
+	return arg_pol;
+}
+
+// compute the spatially averaged Polyakov loop;
+cmplx compute_Polyakov(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param)
+{
+
+	cmplx Pol = 0.0; // spatially averaged Polyakov loop
+	int Lx = param->d_size[1];
+	int Lt = param->d_size[0];
+
+	long i, j, r;
+	for (i = 0; i < Lx; i++)
+	{
+		cmplx temp = 1.0; // initialize temp = 1 + 0i;
+		long cart_coord[2] = {0, i};
+		r = cart_to_si(cart_coord, param);
+
+		for (j = 0; j < Lt; j++)
+		{
+			temp *= conf->U[r][0];
+			r = geo->up[r][0]; // jump to the next site ( in the 0 direction )
+		}
+
+		Pol += temp;
+	}
+
+	Pol = Pol / Lx;
+	return Pol;
+}
 
 #endif

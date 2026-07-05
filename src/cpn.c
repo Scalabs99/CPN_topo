@@ -9,24 +9,24 @@
 #include "../include/rng.h"
 #include "../include/endianness.h"
 
-#include<stdio.h>
-#include<stdlib.h>
-#include<time.h>
-#include<string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
 
-void real_main(char *input_file_name) 
+void real_main(char *input_file_name)
 {
 	CPN_Conf *conf;
 	CPN_Conf aux_conf;
-        CPN_Conf flow_conf; 
-	CPN_Param param;	
+	CPN_Conf flow_conf;
+	CPN_Param param;
 	Geometry geo;
 	Rectangle *most_update;
 	Acc_Swap swap_counter;
 	RNG_Param rng_state;
 	time_t start_date, finish_date;
 	clock_t start_time, finish_time;
-	FILE *datafilep, *swaptrackfilep, *topofilep, *coolfilep, *gradfilep, *argPcoolf, *argPgradf;
+	FILE *datafilep, *swaptrackfilep, *topofilep, *topogradfilep, *coolfilep, *gradfilep, *argPfilep;
 	int i;
 
 	// read input file
@@ -41,17 +41,16 @@ void real_main(char *input_file_name)
 	// open topo data file
 	init_topo_file(&topofilep, &param);
 
-        // open cooling data file 
-        init_cool_file(&coolfilep, &param); 
+	init_topograd_file(&topogradfilep, &param);
 
-        // open gradient flow data file 
-        init_grad_file(&gradfilep, &param); 
+	// open cooling data file
+	init_cool_file(&coolfilep, &param);
 
-        // open argPcool data file
-        init_argPcool_file(&argPcoolf, &param); 
+	// open gradient flow data file
+	init_grad_file(&gradfilep, &param);
 
-        // open argPgrad data file 
-        init_argPgrad_file(&argPgradf, &param); 
+	// open argPcool data file
+	init_argP_file(&argPfilep, &param);
 
 	// open swap tracking file
 	init_swap_track_file(&swaptrackfilep, &param);
@@ -65,59 +64,60 @@ void real_main(char *input_file_name)
 	// initialize aux conf (will be used for cooling and for periodic conf translations)
 	allocate_CPN_conf(&aux_conf, &param);
 
-        // initialize the C[i][mu] for the aux_conf
-        init_bound_cond(&aux_conf, 0, &param); 
-        
-        // initialize the twist matrices 
-        init_twist_matrices(&aux_conf, &param); 
-        
-        // initialize flow_conf ( will be used for gradient flow ) 
-        allocate_CPN_conf(&flow_conf, &param); 
+	// initialize the C[i][mu] for the aux_conf
+	init_bound_cond(&aux_conf, 0, &param);
 
-        // initialize the C[i][mu] for the flow_conf 
-        init_bound_cond(&flow_conf, 0, &param); 
- 
-        // initialize the twist matrices for the flow_conf 
-        init_twist_matrices(&flow_conf, &param); 
+	// initialize the twist matrices
+	init_twist_matrices(&aux_conf, &param);
 
-        // initialize rectangles for hierarchic updates
+	// initialize flow_conf ( will be used for gradient flow )
+	allocate_CPN_conf(&flow_conf, &param);
+
+	// initialize the C[i][mu] for the flow_conf
+	init_bound_cond(&flow_conf, 0, &param);
+
+	// initialize the twist matrices for the flow_conf
+	init_twist_matrices(&flow_conf, &param);
+
+	// initialize rectangles for hierarchic updates
 	init_rectangles_hierarchic_upd(&most_update, &param);
 
 	// initialize swap acceptances array
 	init_swap_acceptances(&swap_counter, &param);
 
-        // If d_MC_step == 0 perform the cooling and the gradient flow 
-        if(param.d_MC_step == 0)
-        {
-         	perform_measure_cooling(&(conf[0]), &geo, &param, coolfilep, argPcoolf, &aux_conf); 
-                write_CPN_conf_on_file(&aux_conf, &param, param.d_outCoolconf_file);
-                perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, argPgradf, &flow_conf, &aux_conf);
-                write_CPN_conf_on_file(&aux_conf, &param, param.d_outGradconf_file); 
-        }
+	// If d_MC_step == 0 perform the cooling and the gradient flow
+	if (param.d_MC_step == 0)
+	{
+		perform_measure_cooling(&(conf[0]), &geo, &param, coolfilep, argPfilep, &aux_conf);
+		write_CPN_conf_on_file(&aux_conf, &param, param.d_outCoolconf_file);
+		perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, argPfilep, &flow_conf, &aux_conf);
+		write_CPN_conf_on_file(&aux_conf, &param, param.d_outGradconf_file);
+	}
 
- 	// Monte Carlo begins
+	// Monte Carlo begins
 	time(&start_date);
-	start_time=clock();
-	for (i=0; i<param.d_MC_step; i++)  
+	start_time = clock();
+	for (i = 0; i < param.d_MC_step; i++)
 	{
 
-                // perform a single step of parallel tempering with hierarchic updates and print state of replica swap
+		// perform a single step of parallel tempering with hierarchic updates and print state of replica swap
 		parallel_tempering_with_hierarchic_update(conf, most_update, &swap_counter, &param, &geo, &aux_conf, &rng_state);
 
 		// normalize the lattice fields of all replicas
-		if ( (conf[0].update_index) % param.d_num_norm == 0) normalize_replicas(conf,&param); 
-		
+		if ((conf[0].update_index) % param.d_num_norm == 0)
+			normalize_replicas(conf, &param);
+
 		// perform measures on homogeneous configuration and print swaps evolution
-		if ( (conf[0].update_index) % param.d_measevery == 0)
+		if ((conf[0].update_index) % param.d_measevery == 0)
 		{
-			perform_measures_localobs(&(conf[0]), &geo, &param, datafilep, topofilep, &aux_conf);
+			perform_measures_localobs(&(conf[0]), &flow_conf, &geo, &param, datafilep, topofilep, topogradfilep, &aux_conf);
 			print_replicas_labels(swaptrackfilep, conf, &param);
 		}
 
 		// save current configurations and backup copies
-		if ( param.d_saveconf_backup_every != 0 )
+		if (param.d_saveconf_backup_every != 0)
 		{
-			if ( (conf[0].update_index) % param.d_saveconf_backup_every == 0)
+			if ((conf[0].update_index) % param.d_saveconf_backup_every == 0)
 			{
 				write_replicas(conf, &param);
 				write_replicas_backup(conf, &param);
@@ -128,8 +128,8 @@ void real_main(char *input_file_name)
 
 	// Monte Carlo ends
 	time(&finish_date);
-	finish_time=clock();
-	fprintf(stdout, "#Simulation time: %.10lf s\n", ((double)(finish_time-start_time))/CLOCKS_PER_SEC );
+	finish_time = clock();
+	fprintf(stdout, "#Simulation time: %.10lf s\n", ((double)(finish_time - start_time)) / CLOCKS_PER_SEC);
 
 	// save last configurations
 	write_replicas(conf, &param);
@@ -144,14 +144,18 @@ void real_main(char *input_file_name)
 	// close topo file
 	fclose(topofilep);
 
-        // close gradient flow and 
-        if (coolfilep != NULL) fclose(coolfilep);
-	if (gradfilep != NULL) fclose(gradfilep);
+	// close topograd file
+	fclose(topogradfilep);
 
+	// close gradient flow and
+	if (coolfilep != NULL)
+		fclose(coolfilep);
+	if (gradfilep != NULL)
+		fclose(gradfilep);
 
-        // close argPfile 
-        if (argPcoolf != NULL) fclose(argPcoolf);
-        if (argPgradf != NULL) fclose(argPgradf);
+	// close argPfile
+	if (argPfilep != NULL)
+		fclose(argPfilep);
 
 	// close swap tracking file
 	end_swap_track_file(&swaptrackfilep, &param);
@@ -178,10 +182,10 @@ void real_main(char *input_file_name)
 	free_param(&param);
 }
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
 	char input_file_name[STD_STRING_LENGTH];
-	if(argc != 2)
+	if (argc != 2)
 	{
 		printf("\n");
 		printf("__________________________________________________________________________________________________________________________________\n");
@@ -209,26 +213,26 @@ int main (int argc, char **argv)
 		printf("Other contributors: Mario Berni, Davide Vadacchino\n");
 		printf("Bug report: %s\n", PACKAGE_BUGREPORT);
 		printf("\nCompiled with N = %i\n", N);
-		#ifdef __INTEL_COMPILER
+#ifdef __INTEL_COMPILER
 		printf("Compiled with icc\n");
-		#elif defined( __GNUC__ )
+#elif defined(__GNUC__)
 		printf("Compiled with gcc %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
-		#endif
+#endif
 		printf("Usage: %s input_file \n", argv[0]);
-		return(EXIT_FAILURE);
+		return (EXIT_FAILURE);
 	}
 	else
 	{
-		if(strlen(argv[1]) >= STD_STRING_LENGTH)
+		if (strlen(argv[1]) >= STD_STRING_LENGTH)
 		{
 			fprintf(stderr, "Input file name too long. Increase STD_STRING_LENGTH in include/macro.h\n");
-			return(EXIT_FAILURE);
+			return (EXIT_FAILURE);
 		}
 		else
 		{
 			strcpy(input_file_name, argv[1]);
 			real_main(input_file_name);
-			return(EXIT_SUCCESS);
+			return (EXIT_SUCCESS);
 		}
 	}
 }
