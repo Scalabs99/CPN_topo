@@ -26,20 +26,22 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 		Q[i] = topo_charge(conf, geo, param, i);   // compute topological charge using i^th discretization
 		chi_p[i] = chi_prime(conf, geo, param, i); // compute chi' using i^th discretization
 	}
-	// print topological observable of hot configuration
+	// print topological observable of hot configuration (and energy)
 	fprintf(topofilep, "%ld %d", conf->update_index, cool_step);
 	for (i = 0; i < 3; i++)
 		fprintf(topofilep, " %.16lf", Q[i]);
 	for (i = 0; i < 3; i++)
 		fprintf(topofilep, " %.16lf", chi_p[i]);
+	fprintf(topofilep, "%.16lf", energy); 
 	fprintf(topofilep, "\n");
 
-	// print topological observable of hot configuration in the topograd file
+	// print topological observable of hot configuration (and energy) in the topograd file
 	fprintf(topogradfilep, "%ld %d", conf->update_index, cool_step);
 	for (i = 0; i < 3; i++)
 		fprintf(topogradfilep, " %.16lf", Q[i]);
 	for (i = 0; i < 3; i++)
 		fprintf(topogradfilep, " %.16lf", chi_p[i]);
+	fprintf(topogradfilep, "%.16lf", energy);
 	fprintf(topogradfilep, "\n");
 
 	// refresh stored topo charge of periodic configuration (used only for multicanonic)
@@ -60,12 +62,14 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 				Q[i] = topo_charge(aux_conf, geo, param, i);
 				chi_p[i] = chi_prime(aux_conf, geo, param, i);
 			}
+			energy = energy_density(aux_conf, geo, param);
 			// print topological observable of cooled configuration
 			fprintf(topofilep, "%ld %d", conf->update_index, cool_step);
 			for (i = 0; i < 3; i++)
 				fprintf(topofilep, " %.16lf", Q[i]);
 			for (i = 0; i < 3; i++)
 				fprintf(topofilep, " %.16lf", chi_p[i]);
+			fprintf(topofilep, "%.16lf", energy); 
 			fprintf(topofilep, "\n");
 		}
 	}
@@ -85,12 +89,14 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 				Q[i] = topo_charge(aux_conf, geo, param, i);
 				chi_p[i] = chi_prime(aux_conf, geo, param, i);
 			}
+			energy = energy_density(aux_conf, geo, param); 
 			// print topological observable of cooled configuration
 			fprintf(topogradfilep, "%ld %d", conf->update_index, grad_step);
 			for (i = 0; i < 3; i++)
 				fprintf(topogradfilep, " %.16lf", Q[i]);
 			for (i = 0; i < 3; i++)
 				fprintf(topogradfilep, " %.16lf", chi_p[i]);
+			fprintf(topogradfilep, "%.16lf", energy); 
 			fprintf(topogradfilep, "\n");
 		}
 	}
