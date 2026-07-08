@@ -32,7 +32,7 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 		fprintf(topofilep, " %.16lf", Q[i]);
 	for (i = 0; i < 3; i++)
 		fprintf(topofilep, " %.16lf", chi_p[i]);
-	fprintf(topofilep, "%.16lf", energy); 
+	fprintf(topofilep, " %.16lf", energy);
 	fprintf(topofilep, "\n");
 
 	// print topological observable of hot configuration (and energy) in the topograd file
@@ -41,7 +41,7 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 		fprintf(topogradfilep, " %.16lf", Q[i]);
 	for (i = 0; i < 3; i++)
 		fprintf(topogradfilep, " %.16lf", chi_p[i]);
-	fprintf(topogradfilep, "%.16lf", energy);
+	fprintf(topogradfilep, " %.16lf", energy);
 	fprintf(topogradfilep, "\n");
 
 	// refresh stored topo charge of periodic configuration (used only for multicanonic)
@@ -69,7 +69,7 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 				fprintf(topofilep, " %.16lf", Q[i]);
 			for (i = 0; i < 3; i++)
 				fprintf(topofilep, " %.16lf", chi_p[i]);
-			fprintf(topofilep, "%.16lf", energy); 
+			fprintf(topofilep, " %.16lf", energy);
 			fprintf(topofilep, "\n");
 		}
 	}
@@ -89,14 +89,14 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 				Q[i] = topo_charge(aux_conf, geo, param, i);
 				chi_p[i] = chi_prime(aux_conf, geo, param, i);
 			}
-			energy = energy_density(aux_conf, geo, param); 
+			energy = energy_density(aux_conf, geo, param);
 			// print topological observable of cooled configuration
 			fprintf(topogradfilep, "%ld %d", conf->update_index, grad_step);
 			for (i = 0; i < 3; i++)
 				fprintf(topogradfilep, " %.16lf", Q[i]);
 			for (i = 0; i < 3; i++)
 				fprintf(topogradfilep, " %.16lf", chi_p[i]);
-			fprintf(topogradfilep, "%.16lf", energy); 
+			fprintf(topogradfilep, " %.16lf", energy);
 			fprintf(topogradfilep, "\n");
 		}
 	}
@@ -272,8 +272,8 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 		fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
 		fflush(argPfilep);
 	}
-    
-	// repeat the same procedure for the cooling routine 
+
+	// repeat the same procedure for the cooling routine
 	FILE *f_force_cool = fopen("final_forces_cool.dat", "w");
 	if (f_force_cool != NULL)
 	{
