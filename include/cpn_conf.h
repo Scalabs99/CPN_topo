@@ -74,6 +74,8 @@ void cooling_improved(CPN_Conf *, Geometry const *const, CPN_Param const *const)
 void gradient_flow(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const);
 double compute_arg_Pol(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, long const);
 cmplx compute_Polyakov(CPN_Conf const *const, Geometry const *const, CPN_Param const *const);
+double mean_force_z(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);
+double mean_force_U(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);
 
 // in lib/cpn_update.c
 void parallel_tempering_with_hierarchic_update(CPN_Conf *, Rectangle const *const, Acc_Swap *,

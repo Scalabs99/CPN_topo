@@ -109,11 +109,18 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
 	int i;
-	double energy, energy_in, energy_out;
+	double energy, energy_in, energy_out, fu_mean, fz_mean;
 	double Q[3];
 	long Lx = param->d_size[1];
 	long j;
 	double arg_P;
+
+	// open the gradient flow force file
+	FILE *f_force_grad = fopen("forces_grad.dat", "w");
+	if (f_force_grad != NULL)
+	{
+		fprintf(f_force_grad, "# |F_z|^2 \t |F_U|^2\n");
+	}
 
 	// aux_conf = conf ( we work on the aux conf and not on the conf )
 	copyconf(conf, param, aux_conf);
@@ -132,6 +139,14 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 	fprintf(gradfilep, "\n");
 
 	fflush(gradfilep);
+
+	// Compute the value of fz_mean and fu_mean on the starting configuration
+	fz_mean = mean_force_z(aux_conf, param, geo);
+	fu_mean = mean_force_U(aux_conf, param, geo);
+
+	// print these values on the forces file
+	fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, fu_mean);
+	fflush(f_force_grad);
 
 	// Initialize energy_out with the value of energy
 	energy_out = energy;
@@ -160,8 +175,16 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 		for (i = 0; i < 3; i++)
 			fprintf(gradfilep, " %.16lf", Q[i]);
 		fprintf(gradfilep, "\n");
-
 		fflush(gradfilep);
+
+		// Compute the lattice mean of the forces
+		fz_mean = mean_force_z(aux_conf, param, geo);
+		fu_mean = mean_force_U(aux_conf, param, geo);
+
+		// Print them on the file
+		fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, fu_mean);
+
+		fflush(f_force_grad);
 
 	} while (fabs(energy_out - energy_in) > (param->d_tollerance));
 
@@ -172,48 +195,24 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 		fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
 		fflush(argPfilep);
 	}
-
-	// save forces computed on the final configuration
-	FILE *f_force_grad = fopen("final_forces_grad.dat", "w");
-	if (f_force_grad != NULL)
-	{
-		fprintf(f_force_grad, "# x \t y \t |F_z|^2 \t |F_U|^2\n");
-		for (i = 0; i < param->d_volume; i++)
-		{
-			long cart[2];
-			si_to_cart(cart, i, param);
-
-			double fz_sq = 0.0;
-			double fu_sq = 0.0;
-			int mu;
-
-			// Compute z force on site i
-			cmplx f_z_array[N] __attribute__((aligned(DOUBLE_ALIGN)));
-			force_z(aux_conf, geo, i, f_z_array);
-			fz_sq = vector_norm(f_z_array); // squared modulus of F_z
-
-			// Compute the U force on site i, and sum over the links (mu=0 and mu=1)
-			for (mu = 0; mu < 2; mu++)
-			{
-				cmplx fu_val = force_U(aux_conf, geo, param, i, mu);
-				fu_sq += cmplx_norm(fu_val); // sum the squared modulus over mu;
-			}
-
-			fprintf(f_force_grad, "%ld \t %ld \t %.16le \t %.16le\n", cart[0], cart[1], fz_sq, fu_sq);
-		}
-		fclose(f_force_grad);
-	}
 }
 
 void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const geo,
 							 CPN_Param const *const param, FILE *coolfilep, FILE *argPfilep, CPN_Conf *aux_conf)
 {
 	int i;
-	double energy, energy_in, energy_out;
+	double energy, energy_in, energy_out, fz_mean, fu_mean;
 	double Q[3];
 	long Lx = param->d_size[1];
 	long j;
 	double arg_P;
+
+	// Open the cooling force file
+	FILE *f_force_cool = fopen("forces_cool.dat", "w");
+	if (f_force_cool != NULL)
+	{
+		fprintf(f_force_cool, "# |F_z|^2 \t |F_U|^2\n");
+	}
 
 	// aux_conf = conf we work on the aux_conf
 	copyconf(conf, param, aux_conf);
@@ -233,6 +232,14 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 
 	// Forces the writing of the first value on the file
 	fflush(coolfilep);
+
+	// Compute the value of fz_mean and fu_mean on the starting configuration
+	fz_mean = mean_force_z(aux_conf, param, geo);
+	fu_mean = mean_force_U(aux_conf, param, geo);
+
+	// Print the values on the file
+	fprintf(f_force_cool, "%.16le \t %.16le\n", fz_mean, fu_mean);
+	fflush(f_force_cool);
 
 	// Initialize energy_out with the value of energy
 	energy_out = energy;
@@ -260,8 +267,15 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 		for (i = 0; i < 3; i++)
 			fprintf(coolfilep, " %.16lf", Q[i]);
 		fprintf(coolfilep, "\n");
-
 		fflush(coolfilep);
+
+		// Compute the lattice mean of the forces
+		fz_mean = mean_force_z(aux_conf, param, geo);
+		fu_mean = mean_force_U(aux_conf, param, geo);
+
+		// Print the values on the file
+		fprintf(f_force_cool, "%.16le \t %.16le\n", fz_mean, fu_mean);
+		fflush(f_force_cool);
 
 	} while (fabs(energy_out - energy_in) > (param->d_tollerance));
 
@@ -271,37 +285,6 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 		arg_P = compute_arg_Pol(aux_conf, geo, param, j);
 		fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
 		fflush(argPfilep);
-	}
-
-	// repeat the same procedure for the cooling routine
-	FILE *f_force_cool = fopen("final_forces_cool.dat", "w");
-	if (f_force_cool != NULL)
-	{
-		fprintf(f_force_cool, "# x \t y \t |F_z|^2 \t |F_U|^2\n");
-		for (i = 0; i < param->d_volume; i++)
-		{
-			long cart[2];
-			si_to_cart(cart, i, param);
-
-			double fz_sq = 0.0;
-			double fu_sq = 0.0;
-			int mu;
-
-			// Compute z force on site i
-			cmplx f_z_array[N] __attribute__((aligned(DOUBLE_ALIGN)));
-			force_z(aux_conf, geo, i, f_z_array);
-			fz_sq = vector_norm(f_z_array); // squared modulus of F_z
-
-			// Compute the U force on site i, and sum over the links (mu=0 and mu=1)
-			for (mu = 0; mu < 2; mu++)
-			{
-				cmplx fu_val = force_U(aux_conf, geo, param, i, mu);
-				fu_sq += cmplx_norm(fu_val); // sum the squared modulus over mu;
-			}
-
-			fprintf(f_force_cool, "%ld \t %ld \t %.16le \t %.16le\n", cart[0], cart[1], fz_sq, fu_sq);
-		}
-		fclose(f_force_cool);
 	}
 }
 
@@ -629,6 +612,55 @@ cmplx compute_Polyakov(CPN_Conf const *const conf, Geometry const *const geo, CP
 
 	Pol = Pol / Lx;
 	return Pol;
+}
+
+// Compute the mean over the lattice of the squared modulus of the forces F_U
+double mean_force_z(CPN_Conf const *const conf, CPN_Param const *const param, Geometry const *const geo)
+{
+	double fz_sq_mean = 0.0;
+	int i;
+	for (i = 0; i < param->d_volume; i++)
+	{
+
+		double fz_sq = 0.0;
+
+		// Compute z force on site i
+		cmplx f_z_array[N] __attribute__((aligned(DOUBLE_ALIGN)));
+		force_z(conf, geo, i, f_z_array);
+		fz_sq = vector_norm(f_z_array); // squared modulus of F_z
+
+		fz_sq_mean += fz_sq;
+	}
+
+	fz_sq_mean = fz_sq_mean / (double)param->d_volume;
+
+	return fz_sq_mean;
+}
+
+// Compute the mean over the lattice of the squared modulus of the forces F_z
+double mean_force_U(CPN_Conf const *const conf, CPN_Param const *const param, Geometry const *const geo)
+{
+	double fu_sq_mean = 0.0;
+	int i;
+	for (i = 0; i < param->d_volume; i++)
+	{
+
+		double fu_sq = 0.0;
+		int mu;
+
+		// Compute the U force on site i, and sum over the links (mu=0 and mu=1)
+		for (mu = 0; mu < 2; mu++)
+		{
+			cmplx fu_val = force_U(conf, geo, param, i, mu);
+			fu_sq += cmplx_norm(fu_val); // sum the squared modulus over mu;
+		}
+
+		fu_sq_mean += fu_sq;
+	}
+
+	fu_sq_mean = fu_sq_mean / (double)param->d_volume;
+
+	return fu_sq_mean;
 }
 
 #endif
