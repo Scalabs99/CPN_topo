@@ -120,6 +120,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 	if (f_force_grad != NULL)
 	{
 		fprintf(f_force_grad, "# |F_z|^2 \t |F_U|^2\n");
+		fflush(f_force_grad);
 	}
 
 	// aux_conf = conf ( we work on the aux conf and not on the conf )
@@ -145,9 +146,11 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 	fu_mean = mean_force_U(aux_conf, param, geo);
 
 	// print these values on the forces file
-	fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, fu_mean);
-	fflush(f_force_grad);
-
+	if (f_force_grad != NULL)
+	{
+		fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, fu_mean);
+		fflush(f_force_grad);
+	}
 	// Initialize energy_out with the value of energy
 	energy_out = energy;
 
@@ -182,9 +185,11 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 		fu_mean = mean_force_U(aux_conf, param, geo);
 
 		// Print them on the file
-		fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, fu_mean);
-
-		fflush(f_force_grad);
+		if (f_force_grad != NULL)
+		{
+			fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, fu_mean);
+			fflush(f_force_grad);
+		}
 
 	} while (fabs(energy_out - energy_in) > (param->d_tollerance));
 
@@ -194,6 +199,12 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 		arg_P = compute_arg_Pol(aux_conf, geo, param, j);
 		fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
 		fflush(argPfilep);
+	}
+
+	// FIX: Chiudi il file delle forze del Gradient Flow
+	if (f_force_grad != NULL)
+	{
+		fclose(f_force_grad);
 	}
 }
 
@@ -212,6 +223,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 	if (f_force_cool != NULL)
 	{
 		fprintf(f_force_cool, "# |F_z|^2 \t |F_U|^2\n");
+		fflush(f_force_cool);
 	}
 
 	// aux_conf = conf we work on the aux_conf
@@ -238,8 +250,11 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 	fu_mean = mean_force_U(aux_conf, param, geo);
 
 	// Print the values on the file
-	fprintf(f_force_cool, "%.16le \t %.16le\n", fz_mean, fu_mean);
-	fflush(f_force_cool);
+	if (f_force_cool != NULL)
+	{
+		fprintf(f_force_cool, "%.16le \t %.16le\n", fz_mean, fu_mean);
+		fflush(f_force_cool);
+	}
 
 	// Initialize energy_out with the value of energy
 	energy_out = energy;
@@ -274,8 +289,11 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 		fu_mean = mean_force_U(aux_conf, param, geo);
 
 		// Print the values on the file
-		fprintf(f_force_cool, "%.16le \t %.16le\n", fz_mean, fu_mean);
-		fflush(f_force_cool);
+		if (f_force_cool != NULL)
+		{
+			fprintf(f_force_cool, "%.16le \t %.16le\n", fz_mean, fu_mean);
+			fflush(f_force_cool);
+		}
 
 	} while (fabs(energy_out - energy_in) > (param->d_tollerance));
 
@@ -285,6 +303,12 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 		arg_P = compute_arg_Pol(aux_conf, geo, param, j);
 		fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
 		fflush(argPfilep);
+	}
+
+	// FIX: Chiudi il file delle forze del Gradient Flow
+	if (f_force_cool != NULL)
+	{
+		fclose(f_force_cool);
 	}
 }
 
