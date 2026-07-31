@@ -590,6 +590,64 @@ void gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const ge
 	}
 }
 
+// Perform a single integration step for the gradient flow equations
+// The integration scheme is the simple Euler scheme
+void gradient_flow_constrained(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const geo, CPN_Param const *const param)
+{
+	int i, j, mu;
+	double c_U = 2.0 * (param->d_beta) * N * (param->d_int_step);
+	double c_z = (param->d_beta) * N * (param->d_int_step);
+	double theta_mu;
+	double F_theta;
+	cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
+
+	for (i = 0; i < param->d_volume; i++)
+	{
+		
+		double sum = 0.0; 
+		
+		// Compute the force F_U and the Euler evolution step
+		for (mu = 0; mu < 2; mu++)
+		{
+			F_theta = F_theta(conf, geo, param, i, mu);
+			flow_temp->U[i][mu] = conf->U[i][mu] * cexp(I * c_u * F_theta);	// use the phase to compute the auxiliary conf
+
+			// Clean up machine precision noise to ensure strict U(1)
+            flow_temp->U[i][mu] = flow_temp->U[i][mu] / cabs(flow_temp->U[i][mu]);
+		}
+
+		// Compute the force F_z and the Euler evolution step
+		F_z_constrained(conf, geo, i, F_z);
+		vector_times_real_const(F_z, c_z);
+
+		// Assign the value of conf->z[i] to flow_temp->z[i]
+		vector_equal(flow_temp->z[i], conf->z[i]);
+
+		// Euler step
+		vector_sum(flow_temp->z[i], F_z);
+
+		// compute the sum of the modulus of the first N-1 components of z
+		for (j = 0; j < (N-1); j++)
+		{
+			sum += creal(flow_temp->z[i][j] * conj(flow_temp->z[i][j]));
+		}
+
+		// check if sum > 1.0; if so impose sum = 1.0;
+		if (sum > 1.0)
+			sum = 1.0;
+		
+		// assign sqrt(1-sum) to flow_temp->z[i][N-1];
+		flow_temp->z[i][N-1] = sqrt(1-sum) + I * 0.0; 
+	}
+
+	for (i = 0; i < param->d_volume; i++)
+	{
+		vector_equal(conf->z[i], flow_temp->z[i]);
+		conf->U[i][0] = flow_temp->U[i][0];
+		conf->U[i][1] = flow_temp->U[i][1];
+	}
+}
+
 // compute the arg(P(n_x)) for the cooled ( either with GF or cooling ) configuration
 double compute_arg_Pol(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, long const i)
 {

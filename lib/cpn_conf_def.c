@@ -76,6 +76,12 @@ void allocate_CPN_conf(CPN_Conf *conf, CPN_Param const *const param)
 			exit(EXIT_FAILURE);
 		}
 	}
+	err = posix_memalign((void **)&(conf->phase_zN), (size_t)DOUBLE_ALIGN, (size_t)param->d_volume * sizeof(double));
+	if (err != 0)
+	{
+		fprintf(stderr, "Problem in allocating the phases! (%s, %d)\n", __FILE__, __LINE__);
+		exit(EXIT_FAILURE); 
+	}
 }
 
 // initialize single CPN conf replica
@@ -112,6 +118,11 @@ void init_CPN_conf(CPN_Conf *conf, CPN_Param const *const param, char const *con
 	// read conf from file
 	if (param->d_start == 2)
 		read_CPN_conf_from_file(conf, param, conf_file_name);
+
+	for (i = 0; i < param->d_volume; i++)
+	{
+		conf->phase_zN[i] = arg(conf->z[i][N-1]); 
+	}
 }
 
 // initialization of the defect for the replica with label a
@@ -195,6 +206,8 @@ void copyconf(CPN_Conf const *const conf, CPN_Param const *const param, CPN_Conf
 		for (mu = 0; mu < 2; mu++)
 			aux_conf->U[i][mu] = conf->U[i][mu]; // aux_conf->U = conf->U
 	}
+
+	vector_equal(aux_conf->phase_zN, conf->phase_zN); // aux_conf->phase_zN = conf->phase_zN; 
 }
 
 // save replicas confs
@@ -477,6 +490,23 @@ void init_twist_matrices(CPN_Conf *conf, CPN_Param const *const param)
 				}
 			}
 		}
+	}
+}
+
+void fix_gauge_conf(CPN_Conf *conf, CPN_Param const *const param, Geometry const *const geo)
+{
+	long i, long j; 
+	long V = param->d_volume;
+
+    for (i = 0; i < V; i++)
+	{
+		for (j = 0; j < N; j++)
+		{
+			conf->z[i][j] = conf->z[i][j] * cexp(-I * conf->phase_zN[i]);
+		}
+
+		conf->U[i][0] = cexp(-I * conf->phase_zN[i]) * conf->U[i][0] * cexp(+I * conf->phase_zN[geo->up[i][0]]);
+		conf->U[i][1] = cexp(-I * conf->phase_zN[i]) * conf->U[i][1] * cexp(+I * conf->phase_zN[geo->up[i][1]]);
 	}
 }
 

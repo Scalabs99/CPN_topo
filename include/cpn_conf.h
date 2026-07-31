@@ -14,7 +14,8 @@ typedef struct CPN_Conf
 
   long update_index; // counts number of updates performed
 
-  cmplx **z, **U; // CP^{N-1} fields z[space-time volume][N] and U[space-time volume][space-time dimension=2]
+  cmplx **z, **U;   // CP^{N-1} fields z[space-time volume][N] and U[space-time volume][space-time dimension=2]
+  double *phase_zN; // Contains the p-phases of the N-component of the z field for each site phase_zN[space-time volume]
 
   // for multicanonic
   double stored_topo_charge; // stores topological charge
@@ -53,6 +54,7 @@ void write_CPN_conf_on_file(CPN_Conf const *const, CPN_Param const *const, char 
 void read_CPN_conf_from_file(CPN_Conf *, CPN_Param const *const, char const *const);
 void compute_MD5_hash_conf(char *, CPN_Conf const *const, CPN_Param const *const);
 void init_twist_matrices(CPN_Conf *, CPN_Param const *const);
+void fix_gauge_conf(CPN_Conf *, CPN_Param const *const, Geometry const *const);
 void free_CPN_replicas(CPN_Conf *, CPN_Param const *const);
 void free_bound_cond(CPN_Conf *, CPN_Param const *const);
 void free_CPN_conf(CPN_Conf *, CPN_Param const *const);
@@ -72,6 +74,7 @@ void magnetic_susceptibility(CPN_Conf const *const, CPN_Param const *const, doub
 void cooling(CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void cooling_improved(CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void gradient_flow(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const);
+void gradient_flow_constrained(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const);
 double compute_arg_Pol(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, long const);
 cmplx compute_Polyakov(CPN_Conf const *const, Geometry const *const, CPN_Param const *const);
 double mean_force_z(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);
@@ -88,6 +91,8 @@ cmplx staple_up(CPN_Conf const *const, Geometry const *const, long const, int);
 cmplx staple_down(CPN_Conf const *const, Geometry const *const, long const, int);
 cmplx force_U(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, long const, int const);
 void force_z(CPN_Conf const *const, Geometry const *const, long const, cmplx *);
+cmplx F_theta(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, long const, int const);
+void F_z_constrained(CPN_Conf const *const, Geometry const *const, long const, cmplx *);
 void microcanonic_sweep_rectangle(CPN_Conf *, Geometry const *const, CPN_Param const *const, Rectangle const *const);
 void microcanonic_sweep_lattice(CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void microcanonic_single_link_U(CPN_Conf *, Geometry const *const, CPN_Param const *const, long const, int const);
