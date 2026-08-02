@@ -6,6 +6,7 @@
 // inline functions defined in include/cpn_cmplx_op.h
 void vector_zero(cmplx *v);
 void vector_equal(cmplx *v, cmplx const *const w);
+void vector_equal_real(double *v, double const *const w); 
 void vector_sum(cmplx *v, cmplx const *const w);
 void vector_linear_combination_cmplx_coeff(cmplx *res, cmplx const *const v, cmplx const *const w, cmplx const a, cmplx const b);
 void vector_linear_combination_cmplx_coeff_matrix(cmplx *res, cmplx const *const v, cmplx const *const w, cmplx const a, cmplx const b, cmplx const *const A, cmplx const *const B);

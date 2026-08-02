@@ -90,7 +90,7 @@ void real_main(char *input_file_name)
 	{
 		perform_measure_cooling(&(conf[0]), &geo, &param, coolfilep, argPfilep, &aux_conf);
 		write_CPN_conf_on_file(&aux_conf, &param, param.d_outCoolconf_file);
-		perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, argPfilep, &flow_conf, &aux_conf);
+		perform_measure_gradient_flow_constr(&(conf[0]), &geo, &param, gradfilep, argPfilep, &flow_conf, &aux_conf);
 		write_CPN_conf_on_file(&aux_conf, &param, param.d_outGradconf_file);
 	}
 

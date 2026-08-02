@@ -207,7 +207,7 @@ void copyconf(CPN_Conf const *const conf, CPN_Param const *const param, CPN_Conf
 			aux_conf->U[i][mu] = conf->U[i][mu]; // aux_conf->U = conf->U
 	}
 
-	vector_equal(aux_conf->phase_zN, conf->phase_zN); // aux_conf->phase_zN = conf->phase_zN; 
+	vector_equal_real(aux_conf->phase_zN, conf->phase_zN); // aux_conf->phase_zN = conf->phase_zN; 
 }
 
 // save replicas confs
@@ -495,7 +495,7 @@ void init_twist_matrices(CPN_Conf *conf, CPN_Param const *const param)
 
 void fix_gauge_conf(CPN_Conf *conf, CPN_Param const *const param, Geometry const *const geo)
 {
-	long i, long j; 
+	long i, j; 
 	long V = param->d_volume;
 
     for (i = 0; i < V; i++)

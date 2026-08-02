@@ -162,7 +162,7 @@ void force_z(CPN_Conf const *const conf, Geometry const *const geo, long i, cmpl
 	vector_sum(F_z, x2);			 // F_z = c1 x1 + c2 x2
 }
 
-double F_theta(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, long const i, int const mu)
+double F_theta(CPN_Conf const *const conf, Geometry const *const geo, long const i, int const mu)
 {
 	cmplx a, b, c;
 
@@ -181,7 +181,7 @@ double F_theta(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param 
 void F_z_constrained(CPN_Conf const *const conf, Geometry const *const geo, long i, cmplx *F_z)
 {
 	int mu;
-	cmplx coeff1, coeff2, coeff1_a, coeff2_a; 
+	cmplx coeff1, coeff2; 
 	cmplx x1[N] __attribute__((aligned(DOUBLE_ALIGN)));
 	cmplx x2[N] __attribute__((aligned(DOUBLE_ALIGN)));
 	cmplx aux[N] __attribute__((aligned(DOUBLE_ALIGN)));
@@ -221,7 +221,7 @@ void F_z_constrained(CPN_Conf const *const conf, Geometry const *const geo, long
 		// coeff2 = (C*U)(i)_mu * (C*U)(i+mu)_mu
 		coeff2 = conf->C[geo->up[i][mu]][mu] * conf->C[i][mu] * conf->U[i][mu] * conf->U[geo->up[i][mu]][mu];
 		// aux = coeff1  * z(i-2mu) + coeff2 * z(i+2mu)
-		vector_lin_comb_cmplx_coeff_matrix_new(aux, conf->z[geo->dn[geo->dn[i][mu]][mu]], conf->z[geo->up[geo->up[i][mu]][mu]], coeff1, coeff2, conf->M2[geo->dn[geo->dn[i][mu]][mu]][mu], conf->M2[i][mu]);
+		vec_lin_comb_cmplx_coeff_matrix_new(aux, conf->z[geo->dn[geo->dn[i][mu]][mu]], conf->z[geo->up[geo->up[i][mu]][mu]], coeff1, coeff2, conf->M2[geo->dn[geo->dn[i][mu]][mu]][mu], conf->M2[i][mu]);
 		vector_sum(x2, aux); // x2 +=aux
         
 		 // compute the second part of the first term of Symanzik-improved action 

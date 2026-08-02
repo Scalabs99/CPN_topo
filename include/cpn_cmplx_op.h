@@ -26,9 +26,21 @@ inline void vector_zero(cmplx *v)
 	}
 }
 
-
 // v=w
 inline void vector_equal(cmplx *v, cmplx const *const w)
+{
+#ifdef __INTEL_COMPILER
+	__assume_aligned(&(v), DOUBLE_ALIGN);
+#endif
+
+	int i;
+	for (i = 0; i < N; i++)
+	{
+		v[i] = w[i];
+	}
+}
+
+inline void vector_equal_real(double *v, double const *const w)
 {
 #ifdef __INTEL_COMPILER
 	__assume_aligned(&(v), DOUBLE_ALIGN);
@@ -214,13 +226,13 @@ inline void vector_times_real_const(cmplx *v, double const constant)
 inline void vec_times_cmplx_const_new(cmplx *res, cmplx const *const v, cmplx const constant)
 {
 #ifdef __INTEL_COMPILER
-	__assume_aligned(&(v), DOUBLE_ALIGN); 
+	__assume_aligned(&(v), DOUBLE_ALIGN);
 #endif
 
-	int i; 
-	for (i = 0; i < (N-1); i++)
+	int i;
+	for (i = 0; i < (N - 1); i++)
 	{
-		res[i] = v[i] * constant; 
+		res[i] = v[i] * constant;
 	}
 }
 

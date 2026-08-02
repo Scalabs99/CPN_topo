@@ -125,7 +125,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 
 	// aux_conf = conf ( we work on the aux conf and not on the conf )
 	copyconf(conf, param, aux_conf);
-
+ 
 	// compute and print the energy and the topological charge of the conf before the gradient flow
 	energy = energy_density(aux_conf, geo, param);
 
@@ -162,7 +162,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 		energy_in = energy_out;
 
 		// perform the integration step
-		gradient_flow(aux_conf, flow_temp, geo, param);
+		gradient_flow_constrained(aux_conf, flow_temp, geo, param);
 
 		// compute the energy after the integration step
 		energy_out = energy_density(aux_conf, geo, param);
@@ -205,6 +205,113 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 	if (f_force_grad != NULL)
 	{
 		fclose(f_force_grad);
+	}
+}
+
+
+void perform_measure_gradient_flow_constr(CPN_Conf const *const conf, Geometry const *const geo,
+								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
+{
+	int i;
+	double energy, energy_in, energy_out, ftheta_mean, fz_mean;
+	double Q[3];
+	long Lx = param->d_size[1];
+	long j;
+	double arg_P;
+
+	// open the gradient flow force file
+	FILE *f_force_grad_constr = fopen("forces_grad_constrained.dat", "w");
+	if (f_force_grad_constr != NULL)
+	{
+		fprintf(f_force_grad_constr, "# |F_z|^2 \t |F_theta|^2\n");
+		fflush(f_force_grad_constr);
+	}
+
+	// aux_conf = conf ( we work on the aux conf and not on the conf )
+	copyconf(conf, param, aux_conf);
+
+	// Do a gauge transformation on the starting configuration
+	fix_gauge_conf(aux_conf, param, geo); 
+ 
+	// compute and print the energy and the topological charge of the conf before the gradient flow
+	energy = energy_density(aux_conf, geo, param);
+
+	for (i = 0; i < 3; i++)
+	{
+		Q[i] = topo_charge(aux_conf, geo, param, i);
+	}
+
+	fprintf(gradfilep, "%.16lf", energy);
+	for (i = 0; i < 3; i++)
+		fprintf(gradfilep, " %.16lf", Q[i]);
+	fprintf(gradfilep, "\n");
+
+	fflush(gradfilep);
+
+	// Compute the value of fz_mean and fu_mean on the starting configuration
+	fz_mean = mean_force_z_constrained(aux_conf, param, geo);
+	ftheta_mean = mean_force_theta(aux_conf, param, geo);
+
+	// print these values on the forces file
+	if (f_force_grad_constr != NULL)
+	{
+		fprintf(f_force_grad_constr, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
+		fflush(f_force_grad_constr);
+	}
+	// Initialize energy_out with the value of energy
+	energy_out = energy;
+
+	// perform gradient flow
+	do
+	{
+
+		// compute the energy before the integration step
+		energy_in = energy_out;
+
+		// perform the integration step
+		gradient_flow_constrained(aux_conf, flow_temp, geo, param);
+
+		// compute the energy after the integration step
+		energy_out = energy_density(aux_conf, geo, param);
+
+		// compute the topological charge of the configuration after the integration step
+		for (i = 0; i < 3; i++)
+		{
+			Q[i] = topo_charge(aux_conf, geo, param, i);
+		}
+
+		// print the energy and the topological charge of the out configuration
+		fprintf(gradfilep, "%.16lf", energy_out);
+		for (i = 0; i < 3; i++)
+			fprintf(gradfilep, " %.16lf", Q[i]);
+		fprintf(gradfilep, "\n");
+		fflush(gradfilep);
+
+		// Compute the lattice mean of the forces
+		fz_mean = mean_force_z_constrained(aux_conf, param, geo);
+		ftheta_mean = mean_force_theta(aux_conf, param, geo);
+
+		// Print them on the file
+		if (f_force_grad_constr != NULL)
+		{
+			fprintf(f_force_grad_constr, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
+			fflush(f_force_grad_constr);
+		}
+
+	} while (fabs(energy_out - energy_in) > (param->d_tollerance));
+
+	// compute the argP(n_x) on the final configuration
+	for (j = 0; j < Lx; j++)
+	{
+		arg_P = compute_arg_Pol(aux_conf, geo, param, j);
+		fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
+		fflush(argPfilep);
+	}
+
+	// FIX: Chiudi il file delle forze del Gradient Flow
+	if (f_force_grad_constr != NULL)
+	{
+		fclose(f_force_grad_constr);
 	}
 }
 
@@ -547,7 +654,10 @@ void cooling_improved(CPN_Conf *conf, Geometry const *const geo, CPN_Param const
 		vector_normalization(F_z);	   // F_z -> F_z/|F_z|
 		vector_equal(conf->z[i], F_z); // align z along the local force on site i: z = F_z/|F_z|
 	}
+
+	fix_gauge_conf(conf, param, geo); 
 }
+
 
 // Perform a single integration step for the gradient flow equations
 // The integration scheme is the simple Euler scheme
@@ -595,10 +705,9 @@ void gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const ge
 void gradient_flow_constrained(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const geo, CPN_Param const *const param)
 {
 	int i, j, mu;
-	double c_U = 2.0 * (param->d_beta) * N * (param->d_int_step);
+	double c_theta = 2.0 * (param->d_beta) * N * (param->d_int_step);
 	double c_z = (param->d_beta) * N * (param->d_int_step);
-	double theta_mu;
-	double F_theta;
+	double f_theta;
 	cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
 
 	for (i = 0; i < param->d_volume; i++)
@@ -606,11 +715,11 @@ void gradient_flow_constrained(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 		
 		double sum = 0.0; 
 		
-		// Compute the force F_U and the Euler evolution step
+		// Compute the force F_theta and the Euler evolution step
 		for (mu = 0; mu < 2; mu++)
 		{
-			F_theta = F_theta(conf, geo, param, i, mu);
-			flow_temp->U[i][mu] = conf->U[i][mu] * cexp(I * c_u * F_theta);	// use the phase to compute the auxiliary conf
+			f_theta = F_theta(conf, geo, i, mu);
+			flow_temp->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * f_theta);	// use the phase to compute the auxiliary conf
 
 			// Clean up machine precision noise to ensure strict U(1)
             flow_temp->U[i][mu] = flow_temp->U[i][mu] / cabs(flow_temp->U[i][mu]);
@@ -696,7 +805,7 @@ cmplx compute_Polyakov(CPN_Conf const *const conf, Geometry const *const geo, CP
 	return Pol;
 }
 
-// Compute the mean over the lattice of the squared modulus of the forces F_U
+// Compute the mean over the lattice of the squared modulus of the forces F_z
 double mean_force_z(CPN_Conf const *const conf, CPN_Param const *const param, Geometry const *const geo)
 {
 	double fz_sq_mean = 0.0;
@@ -719,7 +828,7 @@ double mean_force_z(CPN_Conf const *const conf, CPN_Param const *const param, Ge
 	return fz_sq_mean;
 }
 
-// Compute the mean over the lattice of the squared modulus of the forces F_z
+// Compute the mean over the lattice of the squared modulus of the forces F_U
 double mean_force_U(CPN_Conf const *const conf, CPN_Param const *const param, Geometry const *const geo)
 {
 	double fu_sq_mean = 0.0;
@@ -743,6 +852,55 @@ double mean_force_U(CPN_Conf const *const conf, CPN_Param const *const param, Ge
 	fu_sq_mean = fu_sq_mean / (double)param->d_volume;
 
 	return fu_sq_mean;
+}
+
+// Compute the mean over the lattice of the squared modulus of the forces F_z with the zN real constraint
+double mean_force_z_constrained(CPN_Conf const *const conf, CPN_Param const *const param, Geometry const *const geo)
+{
+	double fz_sq_mean = 0.0;
+	int i;
+	for (i = 0; i < param->d_volume; i++)
+	{
+
+		double fz_sq = 0.0;
+
+		// Compute z force on site i
+		cmplx f_z_array[N] __attribute__((aligned(DOUBLE_ALIGN)));
+		F_z_constrained(conf, geo, i, f_z_array);
+		fz_sq = vector_norm(f_z_array); // squared modulus of F_z
+
+		fz_sq_mean += fz_sq;
+	}
+
+	fz_sq_mean = fz_sq_mean / (double)param->d_volume;
+
+	return fz_sq_mean;
+}
+
+// Compute the mean over the lattice of the squared modulus of the forces F_theta
+double mean_force_theta(CPN_Conf const *const conf, CPN_Param const *const param, Geometry const *const geo)
+{
+	double ftheta_sq_mean = 0.0;
+	int i;
+	for (i = 0; i < param->d_volume; i++)
+	{
+
+		double ftheta_sq = 0.0;
+		int mu;
+
+		// Compute the U force on site i, and sum over the links (mu=0 and mu=1)
+		for (mu = 0; mu < 2; mu++)
+		{
+			cmplx ftheta_val = F_theta(conf, geo, i, mu);
+			ftheta_sq += cmplx_norm(ftheta_val); // sum the squared modulus over mu;
+		}
+
+		ftheta_sq_mean += ftheta_sq;
+	}
+
+	ftheta_sq_mean = ftheta_sq_mean / (double)param->d_volume;
+
+	return ftheta_sq_mean;
 }
 
 #endif
