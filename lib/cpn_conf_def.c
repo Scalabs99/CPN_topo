@@ -80,7 +80,7 @@ void allocate_CPN_conf(CPN_Conf *conf, CPN_Param const *const param)
 	if (err != 0)
 	{
 		fprintf(stderr, "Problem in allocating the phases! (%s, %d)\n", __FILE__, __LINE__);
-		exit(EXIT_FAILURE); 
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -118,11 +118,6 @@ void init_CPN_conf(CPN_Conf *conf, CPN_Param const *const param, char const *con
 	// read conf from file
 	if (param->d_start == 2)
 		read_CPN_conf_from_file(conf, param, conf_file_name);
-
-	for (i = 0; i < param->d_volume; i++)
-	{
-		conf->phase_zN[i] = arg(conf->z[i][N-1]); 
-	}
 }
 
 // initialization of the defect for the replica with label a
@@ -207,7 +202,7 @@ void copyconf(CPN_Conf const *const conf, CPN_Param const *const param, CPN_Conf
 			aux_conf->U[i][mu] = conf->U[i][mu]; // aux_conf->U = conf->U
 	}
 
-	vector_equal_real(aux_conf->phase_zN, conf->phase_zN); // aux_conf->phase_zN = conf->phase_zN; 
+	vector_equal_real(aux_conf->phase_zN, conf->phase_zN); // aux_conf->phase_zN = conf->phase_zN;
 }
 
 // save replicas confs
@@ -495,10 +490,16 @@ void init_twist_matrices(CPN_Conf *conf, CPN_Param const *const param)
 
 void fix_gauge_conf(CPN_Conf *conf, CPN_Param const *const param, Geometry const *const geo)
 {
-	long i, j; 
+	long i;
+	int j;
 	long V = param->d_volume;
 
-    for (i = 0; i < V; i++)
+	for (i = 0; i < V; i++)
+	{
+		conf->phase_zN[i] = arg(conf->z[i][N-1]); 
+	}
+
+	for (i = 0; i < V; i++)
 	{
 		for (j = 0; j < N; j++)
 		{
@@ -547,6 +548,7 @@ void free_CPN_conf(CPN_Conf *conf, CPN_Param const *const param)
 	}
 	free(conf->z);
 	free(conf->U);
+	free(conf->phase_zN);
 	free(conf->M1);
 	free(conf->M2);
 }
