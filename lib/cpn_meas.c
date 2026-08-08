@@ -109,7 +109,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
 	int i;
-	double energy, energy_in, energy_out, fu_mean, fz_mean;
+	double energy, energy_in, energy_out, ftheta_mean, fz_mean;
 	double Q[3];
 	long Lx = param->d_size[1];
 	long j;
@@ -119,13 +119,13 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 	FILE *f_force_grad = fopen("forces_grad.dat", "w");
 	if (f_force_grad != NULL)
 	{
-		fprintf(f_force_grad, "# |F_z|^2 \t |F_U|^2\n");
+		fprintf(f_force_grad, "# |F_z|^2 \t |F_theta|^2\n");
 		fflush(f_force_grad);
 	}
 
 	// aux_conf = conf ( we work on the aux conf and not on the conf )
 	copyconf(conf, param, aux_conf);
- 
+
 	// compute and print the energy and the topological charge of the conf before the gradient flow
 	energy = energy_density(aux_conf, geo, param);
 
@@ -143,12 +143,12 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 
 	// Compute the value of fz_mean and fu_mean on the starting configuration
 	fz_mean = mean_force_z(aux_conf, param, geo);
-	fu_mean = mean_force_U(aux_conf, param, geo);
+	ftheta_mean = mean_force_theta(aux_conf, param, geo);
 
 	// print these values on the forces file
 	if (f_force_grad != NULL)
 	{
-		fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, fu_mean);
+		fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
 		fflush(f_force_grad);
 	}
 	// Initialize energy_out with the value of energy
@@ -162,7 +162,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 		energy_in = energy_out;
 
 		// perform the integration step
-		gradient_flow_constrained(aux_conf, flow_temp, geo, param);
+		gradient_flow(aux_conf, flow_temp, geo, param);
 
 		// compute the energy after the integration step
 		energy_out = energy_density(aux_conf, geo, param);
@@ -182,12 +182,12 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 
 		// Compute the lattice mean of the forces
 		fz_mean = mean_force_z(aux_conf, param, geo);
-		fu_mean = mean_force_U(aux_conf, param, geo);
+		ftheta_mean = mean_force_theta(aux_conf, param, geo);
 
 		// Print them on the file
 		if (f_force_grad != NULL)
 		{
-			fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, fu_mean);
+			fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
 			fflush(f_force_grad);
 		}
 
@@ -208,11 +208,10 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 	}
 }
 
-
 void perform_measure_gradient_flow_constr(CPN_Conf const *const conf, Geometry const *const geo,
-								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
+										  CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
-	int i;
+	int i; 
 	double energy, energy_in, energy_out, ftheta_mean, fz_mean;
 	double Q[3];
 	long Lx = param->d_size[1];
@@ -230,9 +229,9 @@ void perform_measure_gradient_flow_constr(CPN_Conf const *const conf, Geometry c
 	// aux_conf = conf ( we work on the aux conf and not on the conf )
 	copyconf(conf, param, aux_conf);
 
-	// Do a gauge transformation on the starting configuration
-	fix_gauge_conf(aux_conf, param, geo); 
- 
+	// do a gauge transformation on the starting conf
+	fix_gauge_conf(aux_conf, param, geo);
+
 	// compute and print the energy and the topological charge of the conf before the gradient flow
 	energy = energy_density(aux_conf, geo, param);
 
@@ -264,7 +263,6 @@ void perform_measure_gradient_flow_constr(CPN_Conf const *const conf, Geometry c
 	// perform gradient flow
 	do
 	{
-
 		// compute the energy before the integration step
 		energy_in = energy_out;
 
@@ -655,9 +653,8 @@ void cooling_improved(CPN_Conf *conf, Geometry const *const geo, CPN_Param const
 		vector_equal(conf->z[i], F_z); // align z along the local force on site i: z = F_z/|F_z|
 	}
 
-	fix_gauge_conf(conf, param, geo); 
+	fix_gauge_conf(conf, param, geo);
 }
-
 
 // Perform a single integration step for the gradient flow equations
 // The integration scheme is the simple Euler scheme
@@ -712,17 +709,20 @@ void gradient_flow_constrained(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 
 	for (i = 0; i < param->d_volume; i++)
 	{
-		
-		double sum = 0.0; 
-		
+		double sum = 0.0;
+		double z_iN = creal(conf->z[i][N-1]); 
+
+		if (z_iN < 1e-3)
+		{
+			conf->z[i][N-1] = 1e-1 + I * 0.0; 
+			vector_normalization(conf->z[i]); 
+		}
+
 		// Compute the force F_theta and the Euler evolution step
 		for (mu = 0; mu < 2; mu++)
 		{
 			f_theta = F_theta(conf, geo, i, mu);
-			flow_temp->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * f_theta);	// use the phase to compute the auxiliary conf
-
-			// Clean up machine precision noise to ensure strict U(1)
-            flow_temp->U[i][mu] = flow_temp->U[i][mu] / cabs(flow_temp->U[i][mu]);
+			flow_temp->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * f_theta); // use the phase to compute the auxiliary conf
 		}
 
 		// Compute the force F_z and the Euler evolution step
@@ -736,7 +736,7 @@ void gradient_flow_constrained(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 		vector_sum(flow_temp->z[i], F_z);
 
 		// compute the sum of the modulus of the first N-1 components of z
-		for (j = 0; j < (N-1); j++)
+		for (j = 0; j < (N - 1); j++)
 		{
 			sum += creal(flow_temp->z[i][j] * conj(flow_temp->z[i][j]));
 		}
@@ -744,9 +744,9 @@ void gradient_flow_constrained(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 		// check if sum > 1.0; if so impose sum = 1.0;
 		if (sum > 1.0)
 			sum = 1.0;
-		
+
 		// assign sqrt(1-sum) to flow_temp->z[i][N-1];
-		flow_temp->z[i][N-1] = sqrt(1-sum) + I * 0.0; 
+		flow_temp->z[i][N - 1] = sqrt(1 - sum) + I * 0.0;
 	}
 
 	for (i = 0; i < param->d_volume; i++)
@@ -755,6 +755,8 @@ void gradient_flow_constrained(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 		conf->U[i][0] = flow_temp->U[i][0];
 		conf->U[i][1] = flow_temp->U[i][1];
 	}
+
+
 }
 
 // compute the arg(P(n_x)) for the cooled ( either with GF or cooling ) configuration
@@ -809,15 +811,25 @@ cmplx compute_Polyakov(CPN_Conf const *const conf, Geometry const *const geo, CP
 double mean_force_z(CPN_Conf const *const conf, CPN_Param const *const param, Geometry const *const geo)
 {
 	double fz_sq_mean = 0.0;
-	int i;
+	int i, j; 
 	for (i = 0; i < param->d_volume; i++)
 	{
-
 		double fz_sq = 0.0;
+		cmplx scalar_prod; 
 
 		// Compute z force on site i
 		cmplx f_z_array[N] __attribute__((aligned(DOUBLE_ALIGN)));
+		cmplx temp[N] __attribute__((aligned(DOUBLE_ALIGN))); 
+		vector_equal(temp, conf->z[i]); 
 		force_z(conf, geo, i, f_z_array);
+		scalar_prod = vector_scalar_product(conf->z[i], f_z_array); 
+		vector_times_cmplx_const(temp, scalar_prod); 
+
+		for (j = 0; j < N; j++)
+		{
+			f_z_array[j] -= temp[j]; 
+		}
+
 		fz_sq = vector_norm(f_z_array); // squared modulus of F_z
 
 		fz_sq_mean += fz_sq;

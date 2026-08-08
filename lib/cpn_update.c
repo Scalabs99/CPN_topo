@@ -175,7 +175,7 @@ double F_theta(CPN_Conf const *const conf, Geometry const *const geo, long const
 	b *= conf->C[i][mu] * conf->C[geo->up[i][mu]][mu] * conj(conf->U[geo->up[i][mu]][mu]) * conj(conf->U[i][mu]);
 	c *= conf->C[geo->dn[i][mu]][mu] * conf->C[i][mu] * conj(conf->U[geo->dn[i][mu]][mu]) * conj(conf->U[i][mu]);
 
-	return (c1 * cimag(a) + c2 * cimag(b + c)); // F_U
+	return (c1 * cimag(a) + c2 * cimag(b + c)); // F_theta
 }
 
 void F_z_constrained(CPN_Conf const *const conf, Geometry const *const geo, long i, cmplx *F_z)
@@ -185,16 +185,19 @@ void F_z_constrained(CPN_Conf const *const conf, Geometry const *const geo, long
 	cmplx x1[N] __attribute__((aligned(DOUBLE_ALIGN)));
 	cmplx x2[N] __attribute__((aligned(DOUBLE_ALIGN)));
 	cmplx aux[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	
 
 	// Use N components vectors but leave the N component of the force equal to zero 
 	vector_zero(F_z); 
 	vector_zero(x1);
 	vector_zero(x2); 
+	vector_zero(aux); 
+
+	double z_iN = creal(conf->z[i][N-1]);
+    double inv_ziN = 1 / z_iN; 
 
 	for (mu = 0; mu < 2; mu++)
 	{	
-        // How to avoid division by zero ?? 
-		double inv_ziN = 1.0 / creal(conf->z[i][N-1]); 
 		// contribution from first part of the first term of Symanzik-improved action
 		
         // coeff1 = ( C*conj(U) )(i-mu)_mu
@@ -206,12 +209,12 @@ void F_z_constrained(CPN_Conf const *const conf, Geometry const *const geo, long
 		vector_sum(x1, aux); // x1 += aux
 
         // compute the second part of the first term of Symanzik-improved action 
-		coeff1 = (-0.5) * conf->C[geo->dn[i][mu]][mu] * conj(conf->U[geo->dn[i][mu]][mu]) * (creal(conf->z[geo->dn[i][mu]][N-1])/creal(conf->z[i][N-1])) * conj(conf->M1[geo->dn[i][mu]][mu][N-1]);
+		coeff1 = (-0.5) * coeff1 * (creal(conf->z[geo->dn[i][mu]][N-1]) * inv_ziN) * conj(conf->M1[geo->dn[i][mu]][mu][N-1]);
         vec_times_cmplx_const_new(aux, conf->z[i], coeff1); 
 		vector_sum(x1, aux);
 
-		coeff1 = (-0.5) * conf->C[i][mu] * conf->U[i][mu] * (creal(conf->z[geo->up[i][mu]][N-1])/creal(conf->z[i][N-1])) * conf->M1[i][mu][N-1];
-        vec_times_cmplx_const_new(aux, conf->z[i], coeff1); 
+		coeff2 = (-0.5) * coeff2 * (creal(conf->z[geo->up[i][mu]][N-1]) * inv_ziN) * conf->M1[i][mu][N-1];
+        vec_times_cmplx_const_new(aux, conf->z[i], coeff2); 
 		vector_sum(x1, aux);
 
 		// contribution from first part of the second term of Symanzik-improved action
@@ -225,11 +228,11 @@ void F_z_constrained(CPN_Conf const *const conf, Geometry const *const geo, long
 		vector_sum(x2, aux); // x2 +=aux
         
 		 // compute the second part of the first term of Symanzik-improved action 
-		coeff2= (-0.5) * conf->C[geo->dn[geo->dn[i][mu]][mu]][mu] * conf->C[geo->dn[i][mu]][mu] * conj(conf->U[geo->dn[i][mu]][mu] * conf->U[geo->dn[geo->dn[i][mu]][mu]][mu]) * (creal(conf->z[geo->dn[geo->dn[i][mu]][mu]][N-1]) * inv_ziN) * conj(conf->M2[geo->dn[geo->dn[i][mu]][mu]][mu][N-1]);
-        vec_times_cmplx_const_new(aux, conf->z[i], coeff2); 
+		coeff1= (-0.5) * coeff1 * (creal(conf->z[geo->dn[geo->dn[i][mu]][mu]][N-1]) * inv_ziN) * conj(conf->M2[geo->dn[geo->dn[i][mu]][mu]][mu][N-1]);
+        vec_times_cmplx_const_new(aux, conf->z[i], coeff1); 
 		vector_sum(x2, aux);
 
-		coeff2 = (-0.5) * conf->C[geo->up[i][mu]][mu] * conf->C[i][mu] * conf->U[geo->up[i][mu]][mu] * conf->U[i][mu] * (creal(conf->z[geo->up[geo->up[i][mu]][mu]][N-1]) * inv_ziN) * conf->M2[i][mu][N-1];
+		coeff2 = (-0.5) * coeff2 * (creal(conf->z[geo->up[geo->up[i][mu]][mu]][N-1]) * inv_ziN) * conf->M2[i][mu][N-1];
         vec_times_cmplx_const_new(aux, conf->z[i], coeff2); 
 		vector_sum(x2, aux);
 

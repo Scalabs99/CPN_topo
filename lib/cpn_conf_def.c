@@ -202,7 +202,6 @@ void copyconf(CPN_Conf const *const conf, CPN_Param const *const param, CPN_Conf
 			aux_conf->U[i][mu] = conf->U[i][mu]; // aux_conf->U = conf->U
 	}
 
-	vector_equal_real(aux_conf->phase_zN, conf->phase_zN); // aux_conf->phase_zN = conf->phase_zN;
 }
 
 // save replicas confs
@@ -508,6 +507,7 @@ void fix_gauge_conf(CPN_Conf *conf, CPN_Param const *const param, Geometry const
 
 		conf->U[i][0] = cexp(-I * conf->phase_zN[i]) * conf->U[i][0] * cexp(+I * conf->phase_zN[geo->up[i][0]]);
 		conf->U[i][1] = cexp(-I * conf->phase_zN[i]) * conf->U[i][1] * cexp(+I * conf->phase_zN[geo->up[i][1]]);
+        
 	}
 }
 

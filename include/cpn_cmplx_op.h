@@ -223,6 +223,21 @@ inline void vector_times_real_const(cmplx *v, double const constant)
 	}
 }
 
+// v *= constant for a cmplx constant 
+inline void vector_times_cmplx_const(cmplx *v, cmplx const constant)
+{
+#ifdef __INTEL_COMPILER
+	__assume_aligned(&(v), DOUBLE_ALIGN);
+#endif
+
+	int i;
+	for (i = 0; i < N; i++)
+	{
+		v[i] *= constant;
+	}
+}
+
+// res = constant * v 
 inline void vec_times_cmplx_const_new(cmplx *res, cmplx const *const v, cmplx const constant)
 {
 #ifdef __INTEL_COMPILER

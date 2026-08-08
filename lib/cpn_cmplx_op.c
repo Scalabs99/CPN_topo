@@ -18,6 +18,7 @@ cmplx vec_scalar_prod_matrix_new(cmplx const *const v, cmplx const *const w, cmp
 double vector_norm(cmplx const *const v);
 double vector_abs(cmplx const *const v);
 void vector_times_real_const(cmplx *v, double const constant);
+void vector_times_cmplx_const(cmplx *v, cmplx const constant); 
 void vec_times_cmplx_const_new(cmplx *res, cmplx const *const v, cmplx const constant);
 void vector_normalization(cmplx *v);
 double cmplx_norm(cmplx const z);
