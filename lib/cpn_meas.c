@@ -317,7 +317,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 							 CPN_Param const *const param, FILE *coolfilep, FILE *argPfilep, CPN_Conf *aux_conf)
 {
 	int i;
-	double energy, energy_in, energy_out, fz_mean, fu_mean;
+	double energy, energy_in, energy_out, fz_mean, ftheta_mean;
 	double Q[3];
 	long Lx = param->d_size[1];
 	long j;
@@ -327,7 +327,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 	FILE *f_force_cool = fopen("forces_cool.dat", "w");
 	if (f_force_cool != NULL)
 	{
-		fprintf(f_force_cool, "# |F_z|^2 \t |F_U|^2\n");
+		fprintf(f_force_cool, "# |F_z|^2 \t |F_theta|^2\n");
 		fflush(f_force_cool);
 	}
 
@@ -352,12 +352,12 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 
 	// Compute the value of fz_mean and fu_mean on the starting configuration
 	fz_mean = mean_force_z(aux_conf, param, geo);
-	fu_mean = mean_force_U(aux_conf, param, geo);
+	ftheta_mean = mean_force_theta(aux_conf, param, geo);
 
 	// Print the values on the file
 	if (f_force_cool != NULL)
 	{
-		fprintf(f_force_cool, "%.16le \t %.16le\n", fz_mean, fu_mean);
+		fprintf(f_force_cool, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
 		fflush(f_force_cool);
 	}
 
@@ -391,12 +391,12 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 
 		// Compute the lattice mean of the forces
 		fz_mean = mean_force_z(aux_conf, param, geo);
-		fu_mean = mean_force_U(aux_conf, param, geo);
+		ftheta_mean = mean_force_theta(aux_conf, param, geo);
 
 		// Print the values on the file
 		if (f_force_cool != NULL)
 		{
-			fprintf(f_force_cool, "%.16le \t %.16le\n", fz_mean, fu_mean);
+			fprintf(f_force_cool, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
 			fflush(f_force_cool);
 		}
 
