@@ -8,7 +8,7 @@
 void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const geo,
 							   CPN_Param const *const param, FILE *datafilep, FILE *topofilep, FILE *topogradfilep, CPN_Conf *aux_conf)
 {
-	int cool_step = 0, i, grad_step;
+	int cool_step = 0, i, grad_step = 0;
 	double magn_susc[2], Q[3], chi_p[3];
 	double energy;
 	cmplx Pol_loop; // Polyakov loop;
@@ -36,7 +36,7 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 	fprintf(topofilep, "\n");
 
 	// print topological observable of hot configuration (and energy) in the topograd file
-	fprintf(topogradfilep, "%ld %d", conf->update_index, cool_step);
+	fprintf(topogradfilep, "%ld %d", conf->update_index, grad_step);
 	for (i = 0; i < 3; i++)
 		fprintf(topogradfilep, " %.16lf", Q[i]);
 	for (i = 0; i < 3; i++)
