@@ -458,14 +458,14 @@ double geo_topo_charge_z_density(CPN_Conf const *const conf, Geometry const *con
 	int mu = 0;
 	int nu = 1 - mu;
 
-	aux_1 = vector_scalar_product(conf->z[geo->up[geo->up[i][mu]][nu]], conf->z[i]);
-	aux_2 = vector_scalar_product(conf->z[geo->up[i][mu]], conf->z[geo->up[geo->up[i][mu]][nu]]);
-	aux_3 = vector_scalar_product(conf->z[i], conf->z[geo->up[i][mu]]);
+	aux_1 = vector_scalar_product_matrix(conf->z[geo->up[geo->up[i][mu]][nu]], conf->z[i], conf->M1[i][mu]);
+	aux_2 = vector_scalar_product_two_matrices(conf->z[geo->up[i][mu]], conf->z[geo->up[geo->up[i][mu]][nu]], conf->M1[i][mu], conf->M1[i][mu]);
+	aux_3 = vector_scalar_product_matrix_inverted(conf->z[i], conf->z[geo->up[i][mu]], conf->M1[i][mu]);
 	p1 = aux_1 * aux_2 * aux_3;
 
 	aux_1 = vector_scalar_product(conf->z[geo->up[i][nu]], conf->z[i]);
-	aux_2 = vector_scalar_product(conf->z[geo->up[geo->up[i][mu]][nu]], conf->z[geo->up[i][nu]]);
-	aux_3 = vector_scalar_product(conf->z[i], conf->z[geo->up[geo->up[i][mu]][nu]]);
+	aux_2 = vector_scalar_product_matrix(conf->z[geo->up[geo->up[i][mu]][nu]], conf->z[geo->up[i][nu]], conf->M1[i][mu]);
+	aux_3 = vector_scalar_product_matrix_inverted(conf->z[i], conf->z[geo->up[geo->up[i][mu]][nu]], conf->M1[i][mu]);
 	p2 = aux_1 * aux_2 * aux_3;
 
 	q = -1.0 * (arg(p1) + arg(p2)) / (2.0 * pi);

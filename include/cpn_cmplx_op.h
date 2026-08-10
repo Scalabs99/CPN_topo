@@ -152,7 +152,7 @@ inline cmplx vector_scalar_product(cmplx const *const v, cmplx const *const w)
 	return res;
 }
 
-// res = (v,w) = conj(v) \dot Aw = sum_{i=1}^{N} conj(Av)[i] (w)[i]
+// res = (Av,w) = conj(Av) \dot w = sum_{i=1}^{N} conj(Av)[i] (w)[i]
 inline cmplx vector_scalar_product_matrix(cmplx const *const v, cmplx const *const w, cmplx const *const A)
 {
 #ifdef __INTEL_COMPILER
@@ -166,6 +166,44 @@ inline cmplx vector_scalar_product_matrix(cmplx const *const v, cmplx const *con
 	for (i = 0; i < N; i++)
 	{
 		res += conj(v[i] * A[i]) * w[i];
+	}
+
+	return res;
+}
+
+// res = (v, Aw) = conj(v) \dot (Aw) = sum_{i=1}^{N} conj(v)[i] (Aw)[i]
+inline cmplx vector_scalar_product_matrix_inverted(cmplx const *const v, cmplx const *const w, cmplx const *const A)
+{
+#ifdef __INTEL_COMPILER
+	__assume_aligned(&(v), DOUBLE_ALIGN);
+	__assume_aligned(&(w), DOUBLE_ALIGN);
+	__assume_aligned(&(A), DOUBLE_ALIGN);
+#endif
+
+	int i;
+	cmplx res = 0.0 + I * 0.0;
+	for (i = 0; i < N; i++)
+	{
+		res += conj(v[i]) * (A[i] * w[i]);
+	}
+
+	return res;
+}
+
+// res = (Av, Bw) = conj(Av) \dot (Bw) = sum_{i=1}^{N} conj(Av)[i] (Bw)[i]
+inline cmplx vector_scalar_product_two_matrices(cmplx const *const v, cmplx const *const w, cmplx const *const A, cmplx const *const B)
+{
+#ifdef __INTEL_COMPILER
+	__assume_aligned(&(v), DOUBLE_ALIGN);
+	__assume_aligned(&(w), DOUBLE_ALIGN);
+	__assume_aligned(&(A), DOUBLE_ALIGN);
+#endif
+
+	int i;
+	cmplx res = 0.0 + I * 0.0;
+	for (i = 0; i < N; i++)
+	{
+		res += conj(A[i] * v[i]) * (B[i] * w[i]);
 	}
 
 	return res;
