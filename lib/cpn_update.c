@@ -162,6 +162,56 @@ void force_z(CPN_Conf const *const conf, Geometry const *const geo, long i, cmpl
 	vector_sum(F_z, x2);			 // F_z = c1 x1 + c2 x2
 }
 
+// compute the tangential component of F_z
+void force_z_tangent(CPN_Conf const *const conf, Geometry const *const geo, long i, cmplx *F_z_tg)
+{
+	int mu, j; 
+	cmplx coeff1, coeff2, scalar_prod; 
+	cmplx x1[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	cmplx x2[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	cmplx aux[N] __attribute__((aligned(DOUBLE_ALIGN)));
+
+	vector_zero(F_z_tg); // F_z=0
+	vector_zero(x1);  // x1=0
+	vector_zero(x2);  // x2=0
+	for (mu = 0; mu < 2; mu++)
+	{
+		// contribution from first term of Symanzik-improved action
+
+		// coeff1 = ( C*conj(U) )(i-mu)_mu
+		coeff1 = conf->C[geo->dn[i][mu]][mu] * conj(conf->U[geo->dn[i][mu]][mu]);
+		// coeff2 = (C*U)(i)_mu
+		coeff2 = conf->C[i][mu] * conf->U[i][mu];
+		// aux = coeff1 * z(i-mu) + coeff2 * z(i+mu)
+		vector_linear_combination_cmplx_coeff_matrix(aux, conf->z[geo->dn[i][mu]], conf->z[geo->up[i][mu]], coeff1, coeff2, conf->M1[geo->dn[i][mu]][mu], conf->M1[i][mu]);
+		vector_sum(x1, aux); // x1 += aux
+
+		// contribution from second term of Symanzik-improved action
+
+		// coeff1 = (C*U)(i-2mu)_mu * ( C*conj(U) )(i-mu)_mu
+		coeff1 = conf->C[geo->dn[geo->dn[i][mu]][mu]][mu] * conf->C[geo->dn[i][mu]][mu] * conj(conf->U[geo->dn[i][mu]][mu] * conf->U[geo->dn[geo->dn[i][mu]][mu]][mu]);
+		// coeff2 = (C*U)(i)_mu * (C*U)(i+mu)_mu
+		coeff2 = conf->C[geo->up[i][mu]][mu] * conf->C[i][mu] * conf->U[i][mu] * conf->U[geo->up[i][mu]][mu];
+		// aux = coeff1  * z(i-2mu) + coeff2 * z(i+2mu)
+		vector_linear_combination_cmplx_coeff_matrix(aux, conf->z[geo->dn[geo->dn[i][mu]][mu]], conf->z[geo->up[geo->up[i][mu]][mu]], coeff1, coeff2, conf->M2[geo->dn[geo->dn[i][mu]][mu]][mu], conf->M2[i][mu]);
+		vector_sum(x2, aux); // x2 +=aux
+	}
+
+	// compute total force
+	vector_times_real_const(x1, c1); // x1 -> c1 x1
+	vector_times_real_const(x2, c2); // x1 -> c2 x2
+	vector_sum(F_z_tg, x1);			 // F_z = c1 x1
+	vector_sum(F_z_tg, x2);			 // F_z = c1 x1 + c2 x2
+
+    // compute scalar product 
+	scalar_prod = vector_scalar_product(conf->z[i], F_z); 
+	// compute tangential component 
+    for (j = 0; j < N; j++)
+	{
+		F_z_tg[j] -= scalar_prod * conf->z[i][j]; 
+	}
+}
+
 double F_theta(CPN_Conf const *const conf, Geometry const *const geo, long const i, int const mu)
 {
 	cmplx a, b, c;

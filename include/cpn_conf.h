@@ -62,7 +62,6 @@ void free_CPN_conf(CPN_Conf *, CPN_Param const *const);
 // in lib/cpn_meas.c
 void perform_measures_localobs(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const, FILE *, FILE *, FILE *, CPN_Conf *);
 void perform_measure_gradient_flow(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, FILE *, FILE *, CPN_Conf *, CPN_Conf *);
-void perform_measure_gradient_flow_constr(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, FILE *, FILE *, CPN_Conf *, CPN_Conf *);
 void perform_measure_cooling(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, FILE *, FILE *, CPN_Conf *);
 cmplx plaquette(CPN_Conf const *const, Geometry const *const, long const, int const mu, int const nu);
 double energy_density(CPN_Conf const *const, Geometry const *const, CPN_Param const *const);
@@ -75,12 +74,11 @@ void magnetic_susceptibility(CPN_Conf const *const, CPN_Param const *const, doub
 void cooling(CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void cooling_improved(CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void gradient_flow(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const);
-void gradient_flow_constrained(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const);
+void gradient_flow_tg(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const);
 double compute_arg_Pol(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, long const);
 cmplx compute_Polyakov(CPN_Conf const *const, Geometry const *const, CPN_Param const *const);
-double mean_force_z(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);
+double mean_force_z_tang(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);
 double mean_force_U(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);
-double mean_force_z_constrained(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);
 double mean_force_theta(CPN_Conf const *const, CPN_Param const *const, Geometry const *const); 
 
 // in lib/cpn_update.c
@@ -94,6 +92,7 @@ cmplx staple_up(CPN_Conf const *const, Geometry const *const, long const, int);
 cmplx staple_down(CPN_Conf const *const, Geometry const *const, long const, int);
 cmplx force_U(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, long const, int const);
 void force_z(CPN_Conf const *const, Geometry const *const, long const, cmplx *);
+void force_z_tangent(CPN_Conf const *const, Geometry const *const, long, cmplx *);
 double F_theta(CPN_Conf const *const, Geometry const *const, long const, int const);
 void F_z_constrained(CPN_Conf const *const, Geometry const *const, long const, cmplx *);
 void microcanonic_sweep_rectangle(CPN_Conf *, Geometry const *const, CPN_Param const *const, Rectangle const *const);
