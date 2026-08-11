@@ -613,7 +613,7 @@ void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const
 		}
 
 		// Compute the force F_z and the Euler evolution step
-		F_z_constrained(conf, geo, i, F_z_tg);
+		force_z_tangent(conf, geo, i, F_z_tg);
 		vector_times_real_const(F_z_tg, c_z);
 
 		// Assign the value of conf->z[i] to flow_temp->z[i]
