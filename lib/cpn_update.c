@@ -204,7 +204,7 @@ void force_z_tangent(CPN_Conf const *const conf, Geometry const *const geo, long
 	vector_sum(F_z_tg, x2);			 // F_z = c1 x1 + c2 x2
 
     // compute scalar product 
-	scalar_prod = vector_scalar_product(conf->z[i], F_z); 
+	scalar_prod = vector_scalar_product(conf->z[i], F_z_tg); 
 	// compute tangential component 
     for (j = 0; j < N; j++)
 	{
