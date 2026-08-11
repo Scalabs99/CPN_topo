@@ -162,7 +162,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 		energy_in = energy_out;
 
 		// perform the integration step
-		gradient_flow(aux_conf, flow_temp, geo, param);
+		gradient_flow_tg(aux_conf, flow_temp, geo, param);
 
 		// compute the energy after the integration step
 		energy_out = energy_density(aux_conf, geo, param);
@@ -181,7 +181,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 		fflush(gradfilep);
 
 		// Compute the lattice mean of the forces
-		fz_mean = mean_force_z(aux_conf, param, geo);
+		fz_mean = mean_force_z_tang(aux_conf, param, geo);
 		ftheta_mean = mean_force_theta(aux_conf, param, geo);
 
 		// Print them on the file
@@ -222,7 +222,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 	FILE *f_force_cool = fopen("forces_cool.dat", "w");
 	if (f_force_cool != NULL)
 	{
-		fprintf(f_force_cool, "# |F_z|^2 \t |F_theta|^2\n");
+		fprintf(f_force_cool, "# |F_z_tang|^2 \t |F_theta|^2\n");
 		fflush(f_force_cool);
 	}
 
@@ -246,7 +246,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 	fflush(coolfilep);
 
 	// Compute the value of fz_mean and fu_mean on the starting configuration
-	fz_mean = mean_force_z(aux_conf, param, geo);
+	fz_mean = mean_force_z_tang(aux_conf, param, geo);
 	ftheta_mean = mean_force_theta(aux_conf, param, geo);
 
 	// Print the values on the file
@@ -285,7 +285,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 		fflush(coolfilep);
 
 		// Compute the lattice mean of the forces
-		fz_mean = mean_force_z(aux_conf, param, geo);
+		fz_mean = mean_force_z_tang(aux_conf, param, geo);
 		ftheta_mean = mean_force_theta(aux_conf, param, geo);
 
 		// Print the values on the file
@@ -596,7 +596,7 @@ void gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const ge
 // The integration scheme is the simple Euler scheme
 void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const geo, CPN_Param const *const param)
 {
-	int i, j, mu;
+	int i, mu;
 	double c_theta = 2.0 * (param->d_beta) * N * (param->d_int_step);
 	double c_z = 2.0 *(param->d_beta) * N * (param->d_int_step);
 	double f_theta;
@@ -685,7 +685,7 @@ cmplx compute_Polyakov(CPN_Conf const *const conf, Geometry const *const geo, CP
 double mean_force_z_tang(CPN_Conf const *const conf, CPN_Param const *const param, Geometry const *const geo)
 {
 	double fz_sq_mean = 0.0;
-	int i, j; 
+	int i; 
 	for (i = 0; i < param->d_volume; i++)
 	{
 		double fz_sq = 0.0;
