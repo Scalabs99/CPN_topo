@@ -580,7 +580,7 @@ void gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const ge
 		// Euler step
 		vector_sum(flow_temp->z[i], F_z);
 
-		// normalize z[i] and U[i][mu]
+		// normalize z[i] 
 		vector_normalization(flow_temp->z[i]);
 	}
 
@@ -621,6 +621,8 @@ void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const
 
 		// Euler step
 		vector_sum(flow_temp->z[i], F_z_tg);
+		// normalize z[i]
+		vector_normalization(flow_temp->z[i]); 
 	}
 
 	for (i = 0; i < param->d_volume; i++)
