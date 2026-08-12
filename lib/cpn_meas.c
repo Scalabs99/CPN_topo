@@ -108,7 +108,7 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *const geo,
 								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
-	int i;
+	int i, more_steps = 1e4;
 	double energy, energy_in, energy_out, ftheta_mean, fz_mean;
 	double Q[3];
 	long Lx = param->d_size[1];
@@ -192,6 +192,42 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 		}
 
 	} while (fabs(energy_out - energy_in) > (param->d_tollerance));
+
+	for (j = 0; j < more_steps; j++)
+	{
+		// compute the energy before the integration step
+		energy_in = energy_out;
+
+		// perform the integration step
+		gradient_flow_tg(aux_conf, flow_temp, geo, param);
+
+		// compute the energy after the integration step
+		energy_out = energy_density(aux_conf, geo, param);
+
+		// compute the topological charge of the configuration after the integration step
+		for (i = 0; i < 3; i++)
+		{
+			Q[i] = topo_charge(aux_conf, geo, param, i);
+		}
+
+		// print the energy and the topological charge of the out configuration
+		fprintf(gradfilep, "%.16lf", energy_out);
+		for (i = 0; i < 3; i++)
+			fprintf(gradfilep, " %.16lf", Q[i]);
+		fprintf(gradfilep, "\n");
+		fflush(gradfilep);
+
+		// Compute the lattice mean of the forces
+		fz_mean = mean_force_z_tang(aux_conf, param, geo);
+		ftheta_mean = mean_force_theta(aux_conf, param, geo);
+
+		// Print them on the file
+		if (f_force_grad != NULL)
+		{
+			fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
+			fflush(f_force_grad);
+		}
+	}
 
 	// compute the argP(n_x) on the final configuration
 	for (j = 0; j < Lx; j++)
@@ -598,7 +634,7 @@ void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const
 {
 	int i, mu;
 	double c_theta = 2.0 * (param->d_beta) * N * (param->d_int_step);
-	double c_z = 2.0 *(param->d_beta) * N * (param->d_int_step);
+	double c_z = 2.0 * (param->d_beta) * N * (param->d_int_step);
 	double f_theta;
 	cmplx F_z_tg[N] __attribute__((aligned(DOUBLE_ALIGN)));
 
@@ -622,7 +658,7 @@ void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const
 		// Euler step
 		vector_sum(flow_temp->z[i], F_z_tg);
 		// normalize z[i]
-		vector_normalization(flow_temp->z[i]); 
+		vector_normalization(flow_temp->z[i]);
 	}
 
 	for (i = 0; i < param->d_volume; i++)
@@ -631,8 +667,6 @@ void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const
 		conf->U[i][0] = flow_temp->U[i][0];
 		conf->U[i][1] = flow_temp->U[i][1];
 	}
-
-
 }
 
 // compute the arg(P(n_x)) for the cooled ( either with GF or cooling ) configuration
@@ -687,7 +721,7 @@ cmplx compute_Polyakov(CPN_Conf const *const conf, Geometry const *const geo, CP
 double mean_force_z_tang(CPN_Conf const *const conf, CPN_Param const *const param, Geometry const *const geo)
 {
 	double fz_sq_mean = 0.0;
-	int i; 
+	int i;
 	for (i = 0; i < param->d_volume; i++)
 	{
 		double fz_sq = 0.0;
