@@ -108,7 +108,7 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *const geo,
 								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
-	int i; //more_steps = 1e4;
+	int i, more_steps = 3e4;
 	double energy, energy_out, ftheta_mean, fz_mean; // energy_in
 	double Q[3];
 	long Lx = param->d_size[1];
@@ -193,7 +193,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 
 	} while (max(fz_mean, ftheta_mean) > 1e-9); //fabs(energy_out - energy_in) > (param->d_tollerance)
 
-	/*for (j = 0; j < more_steps; j++)
+	for (j = 0; j < more_steps; j++)
 	{
 		// compute the energy before the integration step
 		// energy_in = energy_out;
@@ -227,7 +227,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 			fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
 			fflush(f_force_grad);
 		}
-	}*/
+	}
 
 	// compute the argP(n_x) on the final configuration
 	for (j = 0; j < Lx; j++)
