@@ -193,7 +193,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 
 	} while (max(fz_mean, ftheta_mean) > 1e-9); //fabs(energy_out - energy_in) > (param->d_tollerance)
 
-	for (j = 0; j < more_steps; j++)
+	/*for (j = 0; j < more_steps; j++)
 	{
 		// compute the energy before the integration step
 		// energy_in = energy_out;
@@ -227,7 +227,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 			fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
 			fflush(f_force_grad);
 		}
-	}
+	}*/
 
 	// compute the argP(n_x) on the final configuration
 	for (j = 0; j < Lx; j++)
