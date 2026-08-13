@@ -325,6 +325,18 @@ inline double arg(cmplx const z)
 	return atan2(y, x);
 }
 
+// returns the max between two real numbers 
+inline double max(double const a, double const b)
+{
+	double max; 
+	if ( a > b )
+		max = a; 
+	else 
+		max = b; 
+
+	return max; 
+}
+
 // complex random
 
 inline cmplx cmplx_rand_num(RNG_Param *rng_state)

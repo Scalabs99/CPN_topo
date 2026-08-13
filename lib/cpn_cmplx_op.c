@@ -26,6 +26,7 @@ void vector_normalization(cmplx *v);
 double cmplx_norm(cmplx const z);
 double cmplx_abs(cmplx const z);
 double arg(cmplx const z);
+double max(double const a, double const b); 
 cmplx cmplx_rand_num(RNG_Param *rng_state);
 void vector_random_cold(cmplx *v, RNG_Param *rng_state);
 void vector_random_hot(cmplx *v, RNG_Param *rng_state);
