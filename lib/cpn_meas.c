@@ -108,7 +108,7 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *const geo,
 								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
-	int i, more_steps = 1e4;
+	int i; //more_steps = 1e4;
 	double energy, energy_out, ftheta_mean, fz_mean; // energy_in
 	double Q[3];
 	long Lx = param->d_size[1];
