@@ -109,7 +109,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
 	int i, more_steps = 3e4;
-	double energy, energy_out, ftheta_mean, fz_mean, energy_in; 
+	double energy, energy_out, ftheta_mean, fz_mean; // energy_in; 
 	double Q[3];
 	long Lx = param->d_size[1];
 	long j;
@@ -159,7 +159,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 	{
 
 		// compute the energy before the integration step
-		energy_in = energy_out;
+		// energy_in = energy_out;
 
 		// perform the integration step
 		gradient_flow_tg(aux_conf, flow_temp, geo, param);
@@ -191,12 +191,12 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 			fflush(f_force_grad);
 		}
 
-	} while (fabs(energy_out - energy_in) > (param->d_tollerance));  // max(fz_mean, ftheta_mean) > 1e-9
+	} while (max(fz_mean, ftheta_mean) > 1e-9);  // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
 
 	for (j = 0; j < more_steps; j++)
 	{
 		// compute the energy before the integration step
-		energy_in = energy_out;
+		// energy_in = energy_out;
 
 		// perform the integration step
 		gradient_flow_tg(aux_conf, flow_temp, geo, param);
