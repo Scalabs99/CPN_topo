@@ -39,4 +39,7 @@ fi
 
 # compile code
 ./configure CFLAGS="$MY_CFLAGS" LDFLAGS="$MY_LDFLAGS"
+
+make clean 
+
 make ${TARGET_EXEC} #-j 18
