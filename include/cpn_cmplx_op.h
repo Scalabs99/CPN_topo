@@ -134,6 +134,40 @@ inline void vector_linear_combination_real_coeff(cmplx *v, cmplx const *const w,
 	}
 }
 
+// v = a*v + b*w + c*u  with a,b,c real
+inline void vec_lin_comb_3_real_coeff(cmplx *v, cmplx const *const w, cmplx const *const u, double const a, double const b, double const c)
+{
+#ifdef __INTEL_COMPILER
+	__assume_aligned(&(v), DOUBLE_ALIGN);
+	__assume_aligned(&(w), DOUBLE_ALIGN);
+	__assume_aligned(&(u), DOUBLE_ALIGN); 
+#endif
+
+	int i;
+	for (i = 0; i < N; i++)
+	{
+		v[i] = a * v[i] + b * w[i] + c * u[i]; 
+	}
+}
+
+// v = a*v + b*w + c*u + d*z  with a,b,c,d  real
+inline void vec_lin_comb_4_real_coeff(cmplx *v, cmplx const *const w, cmplx const *const u, cmplx const *const z, double const a, double const b, double const c, double const d)
+{
+#ifdef __INTEL_COMPILER
+	__assume_aligned(&(v), DOUBLE_ALIGN);
+	__assume_aligned(&(w), DOUBLE_ALIGN);
+	__assume_aligned(&(u), DOUBLE_ALIGN); 
+	__assume_aligned(&(z), DOUBLE_ALIGN);
+#endif
+
+	int i;
+	for (i = 0; i < N; i++)
+	{
+		v[i] = a * v[i] + b * w[i] + c * u[i] + d * z[i]; 
+	}
+}
+
+
 // res = (v,w) = conj(v) \dot w = sum_{i=1}^{N} conj(v)[i] w[i]
 inline cmplx vector_scalar_product(cmplx const *const v, cmplx const *const w)
 {

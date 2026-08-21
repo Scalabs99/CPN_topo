@@ -75,6 +75,7 @@ void cooling(CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void cooling_improved(CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void gradient_flow(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void gradient_flow_tg(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const);
+int adaptive_step_RK23(CPN_Conf *, CPN_Conf *, CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param *);
 double compute_arg_Pol(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, long const);
 cmplx compute_Polyakov(CPN_Conf const *const, Geometry const *const, CPN_Param const *const);
 double mean_force_z_tang(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);

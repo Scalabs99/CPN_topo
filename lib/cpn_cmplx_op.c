@@ -12,6 +12,8 @@ void vector_linear_combination_cmplx_coeff(cmplx *res, cmplx const *const v, cmp
 void vector_linear_combination_cmplx_coeff_matrix(cmplx *res, cmplx const *const v, cmplx const *const w, cmplx const a, cmplx const b, cmplx const *const A, cmplx const *const B);
 void vec_lin_comb_cmplx_coeff_matrix_new(cmplx *res, cmplx const *const v, cmplx const *const w, cmplx const a, cmplx const b, cmplx const *const A, cmplx const *const B);
 void vector_linear_combination_real_coeff(cmplx *v, cmplx const *const w, double const a, double const b);
+void vec_lin_comb_3_real_coeff(cmplx *v, cmplx const *const w, cmplx const *const u, double const a, double const b, double const c);
+void vec_lin_comb_4_real_coeff(cmplx *v, cmplx const *const w, cmplx const *const u, cmplx const *const z, double const a, double const b, double const c, double const d);
 cmplx vector_scalar_product(cmplx const *const v, cmplx const *const w);
 cmplx vector_scalar_product_matrix(cmplx const *const v, cmplx const *const w, cmplx const *const A);
 cmplx vector_scalar_product_matrix_inverted(cmplx const *const v, cmplx const *const w, cmplx const *const A);

@@ -109,7 +109,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
 {
 	int i, more_steps = 3e4;
-	double energy, energy_out, ftheta_mean, fz_mean; // energy_in; 
+	double energy, energy_out, ftheta_mean, fz_mean; // energy_in;
 	double Q[3];
 	long Lx = param->d_size[1];
 	long j;
@@ -191,7 +191,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 			fflush(f_force_grad);
 		}
 
-	} while (max(fz_mean, ftheta_mean) > 1e-9);  // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
+	} while (max(fz_mean, ftheta_mean) > 1e-9); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
 
 	for (j = 0; j < more_steps; j++)
 	{
@@ -667,6 +667,140 @@ void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const
 		conf->U[i][0] = flow_temp->U[i][0];
 		conf->U[i][1] = flow_temp->U[i][1];
 	}
+}
+
+int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp2, CPN_Conf *conf_new, Geometry const *const geo, CPN_Param *param)
+{
+	int i, mu, j;
+	double c_theta = 2.0 * (param->d_beta) * N * (param->d_int_step);
+	double c_z = 2.0 * (param->d_beta) * N * (param->d_int_step);
+	double error_abs_z, error_absU, error_abs_in, error_abs = 0.0;
+	double errorU_0, errorU_1;
+	double q, p = 2.0;
+	cmplx F_z_tg1[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	cmplx F_z_tg2[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	cmplx F_z_tg3[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	cmplx error[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	double f_theta1[2] __attribute__((aligned(DOUBLE_ALIGN)));
+	double f_theta2[2] __attribute__((aligned(DOUBLE_ALIGN)));
+	double f_theta3[2] __attribute__((aligned(DOUBLE_ALIGN)));
+
+	cmplx z_ord2[N] __attribute__((aligned(DOUBLE_ALIGN)));
+    cmplx U_ord2[2] __attribute__((aligned(DOUBLE_ALIGN)));
+
+	for (i = 0; i < param->d_volume; i++)
+	{
+		// Compute the force F_theta and the Euler evolution step
+		for (mu = 0; mu < 2; mu++)
+		{
+			f_theta1[mu] = F_theta(conf, geo, i, mu);
+			flow_temp1->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * (2.0 / 3) * f_theta1[mu]); // this is csi 2
+		}
+		// Now repeat the same steps with the z field
+		// Compute csi2
+		force_z_tangent(conf, geo, i, F_z_tg1);
+		vector_times_real_const(F_z_tg1, (2.0 / 3) * c_z);
+		// Assign the value of conf->z[i] to flow_temp->z[i]
+		vector_equal(flow_temp1->z[i], conf->z[i]);
+		// Euler step
+		vector_sum(flow_temp1->z[i], F_z_tg1);
+		// normalize z[i]
+		vector_normalization(flow_temp1->z[i]);
+	}
+
+	for (i = 0; i < param->d_volume; i++)
+	{
+		// Compute the force F_theta and the Euler evolution step
+		for (mu = 0; mu < 2; mu++)
+		{
+			f_theta2[mu] = F_theta(flow_temp1, geo, i, mu);
+			flow_temp2->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * (2.0 / 3) * f_theta2[mu]); // this is csi 3
+		}
+		// Now repeat the same steps with the z field
+		// Compute csi3
+		force_z_tangent(flow_temp1, geo, i, F_z_tg2);
+		vector_times_real_const(F_z_tg2, (2.0 / 3) * c_z);
+		// Assign the value of conf->z[i] to flow_temp->z[i]
+		vector_equal(flow_temp2->z[i], conf->z[i]);
+		// Euler step
+		vector_sum(flow_temp2->z[i], F_z_tg2);
+		// normalize z[i]
+		vector_normalization(flow_temp2->z[i]);
+	}
+
+	for (i = 0; i < param->d_volume; i++)
+	{
+
+		// Compute f(csi3), f(csi2), f(csi1)
+		force_z_tangent(conf, geo, i, F_z_tg1);
+		force_z_tangent(flow_temp1, geo, i, F_z_tg2);
+		force_z_tangent(flow_temp2, geo, i, F_z_tg3);
+
+		for (mu = 0; mu < 2; mu++)
+		{
+			f_theta1[mu] = F_theta(conf, geo, i, mu);
+			f_theta2[mu] = F_theta(flow_temp1, geo, i, mu);
+			f_theta3[mu] = F_theta(flow_temp2, geo, i, mu);
+		
+			z_ord2[mu] = conf->U[i][mu] * cexp(I * c_theta * (0.25 * f_theta1[mu] + 0.75 * f_theta2[mu]));
+			conf_new->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * (0.25 * f_theta1[mu] + 0.375 * (f_theta2[mu] + f_theta3[mu])));
+		}
+		// Compute the candidate solution (two stages)
+		vector_equal(z_ord2, conf->z[i]);
+		vec_lin_comb_3_real_coeff(z_ord2, F_z_tg1, F_z_tg2, 1.0, 0.25 * c_z, 0.75 * c_z);
+		vector_normalization(z_ord2);
+
+		// Compute the control solution
+		vector_equal(conf_new->z[i], conf->z[i]);
+		vec_lin_comb_4_real_coeff(conf_new->z[i], F_z_tg1, F_z_tg2, F_z_tg3, 1.0, 0.25 * c_z, 0.375 * c_z, 0.375 * c_z);
+		vector_normalization(conf_new->z[i]);
+
+		// Compute the error for z;
+		for (j = 0; j < N; j++)
+			error[j] = conf_new->z[i][j] - z_ord2[j];
+
+		error_abs_z = vector_abs(error);
+
+		// Do the same for U[i][mu]
+		errorU_0 = cmplx_abs((conf_new->U[i][0] - U_ord2[0]));
+		errorU_1 = cmplx_abs((conf_new->U[i][1] - U_ord2[1]));
+		error_absU = max(errorU_0, errorU_1);
+
+		// Take the max between the two
+		error_abs_in = max(error_abs_z, error_absU);
+		error_abs = max(error_abs, error_abs_in);
+	}
+
+	// Compute the factor q = (safety_factor) * (epsilon/error_abs)^(1/p+1);
+	double safety = 0.9;
+	q = pow((param->d_epsilon / (error_abs + 1e-15)), 1.0 / (p + 1.0)); // add 1e-15 to avoid dividing by zero
+
+	param->d_int_step = param->d_int_step * q;
+
+	// Limits to avoid a variation too big or too small of the step
+	if (q > 2.0)
+		q = 2.0;
+	if (q < 0.2)
+		q = 0.2;
+
+	param->d_int_step = param->d_int_step * q;
+
+	// Accept/reject step
+	if (error_abs <= param->d_epsilon)
+	{
+		// STEP ACCEPTED: update using the better solution (flow_temp2, order 3)
+		for (i = 0; i < param->d_volume; i++)
+		{
+			vector_equal(conf->z[i], conf_new->z[i]);
+			conf->U[i][0] = conf_new->U[i][0];
+			conf->U[i][1] = conf_new->U[i][1];
+		}
+		return 1; // success
+	}
+
+	// STEP REJECTED: the error is to big
+	// the starting conf remains the same
+	return 0;
 }
 
 // compute the arg(P(n_x)) for the cooled ( either with GF or cooling ) configuration
