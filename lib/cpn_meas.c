@@ -773,7 +773,7 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 
 	// Compute the factor q = (safety_factor) * (epsilon/error_abs)^(1/p+1);
 	double safety = 0.9;
-	q = pow((param->d_epsilon / (error_abs + 1e-15)), 1.0 / (p + 1.0)); // add 1e-15 to avoid dividing by zero
+	q = safety * pow((param->d_epsilon / (error_abs + 1e-15)), 1.0 / (p + 1.0)); // add 1e-15 to avoid dividing by zero
 
 	param->d_int_step = param->d_int_step * q;
 
