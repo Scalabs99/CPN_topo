@@ -908,7 +908,7 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 			f_theta2[mu] = F_theta(flow_temp1, geo, i, mu);
 			f_theta3[mu] = F_theta(flow_temp2, geo, i, mu);
 
-			z_ord2[mu] = conf->U[i][mu] * cexp(I * c_theta * (0.25 * f_theta1[mu] + 0.75 * f_theta2[mu]));
+			U_ord2[mu] = conf->U[i][mu] * cexp(I * c_theta * (0.25 * f_theta1[mu] + 0.75 * f_theta2[mu]));
 			flow_temp3->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * (0.25 * f_theta1[mu] + 0.375 * (f_theta2[mu] + f_theta3[mu])));
 		}
 		// Compute the candidate solution (two stages)
