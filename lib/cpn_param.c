@@ -226,7 +226,7 @@ void read_input(char const *const input_file_name, CPN_Param *param)
 				}
 				param->d_int_step = temp_d;
 			}
-			else if (strncmp(str, "tollerance", 12) == 0)
+			else if (strncmp(str, "tolerance", 9) == 0)
 			{
 				err = fscanf(input_fp, "%lf", &temp_d);
 				if (err != 1)
@@ -234,7 +234,17 @@ void read_input(char const *const input_file_name, CPN_Param *param)
 					fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__);
 					exit(EXIT_FAILURE);
 				}
-				param->d_tollerance = temp_d;
+				param->d_tolerance = temp_d;
+			}
+			else if (strncmp(str, "epsilon", 7) == 0)
+			{
+				err = fscanf(input_fp, "%lf", &temp_d);
+				if (err != 1)
+				{
+					fprintf(stderr, "Error in reading the file %s (%s, %d)\n", input_file_name, __FILE__, __LINE__);
+					exit(EXIT_FAILURE);
+				}
+				param->d_epsilon = temp_d;
 			}
 			else if (strncmp(str, "grad_steps", 10) == 0)
 			{
