@@ -18,8 +18,8 @@ void real_main(char *input_file_name)
 {
 	CPN_Conf *conf;
 	CPN_Conf aux_conf;
-	CPN_Conf flow_conf;
-	CPN_Param param;
+	CPN_Conf flow_conf1, flow_conf2, flow_conf3; 
+	CPN_Param param; 
 	Geometry geo;
 	Rectangle *most_update;
 	Acc_Swap swap_counter;
@@ -70,14 +70,21 @@ void real_main(char *input_file_name)
 	// initialize the twist matrices
 	init_twist_matrices(&aux_conf, &param);
 
-	// initialize flow_conf ( will be used for gradient flow )
-	allocate_CPN_conf(&flow_conf, &param);
+	// initialize flow_conf1, flow_conf2, flow_conf3 ( will be used for gradient flow )
+	allocate_CPN_conf(&flow_conf1, &param);
+	allocate_CPN_conf(&flow_conf2, &param); 
+	allocate_CPN_conf(&flow_conf3, &param); 
+
 
 	// initialize the C[i][mu] for the flow_conf
-	init_bound_cond(&flow_conf, 0, &param);
+	init_bound_cond(&flow_conf1, 0, &param);
+	init_bound_cond(&flow_conf2, 0, &param);
+	init_bound_cond(&flow_conf3, 0, &param);
 
 	// initialize the twist matrices for the flow_conf
-	init_twist_matrices(&flow_conf, &param);
+	init_twist_matrices(&flow_conf1, &param);
+	init_twist_matrices(&flow_conf2, &param); 
+	init_twist_matrices(&flow_conf3, &param); 
 
 	// initialize rectangles for hierarchic updates
 	init_rectangles_hierarchic_upd(&most_update, &param);
@@ -88,10 +95,12 @@ void real_main(char *input_file_name)
 	// If d_MC_step == 0 perform the cooling and the gradient flow
 	if (param.d_MC_step == 0)
 	{
-		perform_measure_cooling(&(conf[0]), &geo, &param, coolfilep, argPfilep, &aux_conf);
-		write_CPN_conf_on_file(&aux_conf, &param, param.d_outCoolconf_file);
-		perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, argPfilep, &flow_conf, &aux_conf);
+		// perform_measure_cooling(&(conf[0]), &geo, &param, coolfilep, argPfilep, &aux_conf); uncomment to perform cooling
+		// write_CPN_conf_on_file(&aux_conf, &param, param.d_outCoolconf_file); uncomment to save final cooling configuration 
+		perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, argPfilep, &flow_conf1, &aux_conf);
 		write_CPN_conf_on_file(&aux_conf, &param, param.d_outGradconf_file);
+
+		measure_RK23(&(conf[0]), &geo, &param, &flow_conf1, &flow_conf2, &flow_conf3, &aux_conf); 
 	}
 
 	// Monte Carlo begins
@@ -110,7 +119,7 @@ void real_main(char *input_file_name)
 		// perform measures on homogeneous configuration and print swaps evolution
 		if ((conf[0].update_index) % param.d_measevery == 0)
 		{
-			perform_measures_localobs(&(conf[0]), &flow_conf, &geo, &param, datafilep, topofilep, topogradfilep, &aux_conf);
+			perform_measures_localobs(&(conf[0]), &flow_conf1, &geo, &param, datafilep, topofilep, topogradfilep, &aux_conf);
 			print_replicas_labels(swaptrackfilep, conf, &param);
 		}
 

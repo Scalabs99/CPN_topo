@@ -244,6 +244,170 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 	}
 }
 
+void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, CPN_Conf *flow1, CPN_Conf *flow2, CPN_Conf *flow3, CPN_Conf *aux_conf)
+{
+	int more_steps = 3e4, result;
+	double energy, energy_out, ftheta_mean, fz_mean, step; // energy_in;
+	long j;
+
+	// initialize the step variable 
+	step = param->d_int_step; 
+
+	// open the gradient flow force file
+	FILE *f_force_grad23 = fopen("forces_grad23.dat", "w");
+	FILE *f_ener_grad23 = fopen("energy_grad23.dat", "w");
+	FILE *f_step_grad23 = fopen("step_grad23.dat", "w");
+	if (f_force_grad23 != NULL)
+	{
+		fprintf(f_force_grad23, "# |F_z_tg|^2 \t |F_theta|^2\n");
+		fflush(f_force_grad23);
+	}
+
+	if (f_ener_grad23 != NULL)
+	{
+		fprintf(f_ener_grad23, "# Energy\n");
+		fflush(f_ener_grad23);
+	}
+
+	if (f_step_grad23 != NULL)
+	{
+		fprintf(f_step_grad23, "# Step\n");
+		fflush(f_step_grad23);
+	}
+
+	// aux_conf = conf ( we work on the aux conf and not on the conf )
+	copyconf(conf, param, aux_conf);
+
+	// compute and print the energy and the topological charge of the conf before the gradient flow
+	energy = energy_density(aux_conf, geo, param);
+
+	// print this value on the energy file
+	if (f_ener_grad23 != NULL)
+	{
+		fprintf(f_ener_grad23, " %.16le\n", energy);
+		fflush(f_ener_grad23);
+	}
+
+	// Compute the value of fz_mean and fu_mean on the starting configuration
+	fz_mean = mean_force_z_tang(aux_conf, param, geo);
+	ftheta_mean = mean_force_theta(aux_conf, param, geo);
+
+	// print these values on the forces file
+	if (f_force_grad23 != NULL)
+	{
+		fprintf(f_force_grad23, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
+		fflush(f_force_grad23);
+	}
+
+	if (f_step_grad23 != NULL)
+	{
+		fprintf(f_step_grad23, "%.16le\n", step);
+		fflush(f_step_grad23);
+	}
+	// Initialize energy_out with the value of energy
+	energy_out = energy;
+
+	// perform gradient flow
+	do
+	{
+
+		// compute the energy before the integration step
+		// energy_in = energy_out;
+
+		// perform the integration step
+		do
+		{
+			result = adaptive_step_RK23(aux_conf, flow1, flow2, flow3, geo, param, step);
+
+		} while (result == 0);
+
+		// compute the energy after the integration step
+		energy_out = energy_density(aux_conf, geo, param);
+
+		// Compute the lattice mean of the forces
+		fz_mean = mean_force_z_tang(aux_conf, param, geo);
+		ftheta_mean = mean_force_theta(aux_conf, param, geo);
+
+		// Print them on the file
+		if (f_force_grad23 != NULL)
+		{
+			fprintf(f_force_grad23, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
+			fflush(f_force_grad23);
+		}
+
+		// print this value on the energy file
+		if (f_ener_grad23 != NULL)
+		{
+			fprintf(f_ener_grad23, " %.16le\n", energy_out);
+			fflush(f_ener_grad23);
+		}
+
+		// print the modified integration step on file
+		if (f_step_grad23 != NULL)
+		{
+			fprintf(f_step_grad23, " %.16le\n", step);
+			fflush(f_step_grad23);
+		}
+
+	} while (max(fz_mean, ftheta_mean) > 1e-9); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
+
+	for (j = 0; j < more_steps; j++)
+	{
+		// compute the energy before the integration step
+		// energy_in = energy_out;
+
+		do
+		{
+			// perform the integration step
+			result = adaptive_step_RK23(aux_conf, flow1, flow2, flow3, geo, param, step);
+		} while (result == 0);
+
+		// compute the energy after the integration step
+		energy_out = energy_density(aux_conf, geo, param);
+
+		// print this value on the energy file
+		if (f_ener_grad23 != NULL)
+		{
+			fprintf(f_ener_grad23, " %.16le\n", energy_out);
+			fflush(f_ener_grad23);
+		}
+
+		// Compute the lattice mean of the forces
+		fz_mean = mean_force_z_tang(aux_conf, param, geo);
+		ftheta_mean = mean_force_theta(aux_conf, param, geo);
+
+		// Print them on the file
+		if (f_force_grad23 != NULL)
+		{
+			fprintf(f_force_grad23, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
+			fflush(f_force_grad23);
+		}
+
+		// print the modified integration step on file
+		if (f_step_grad23 != NULL)
+		{
+			fprintf(f_step_grad23, " %.16le\n", step);
+			fflush(f_step_grad23);
+		}
+
+
+	}
+
+	// FIX: Chiudi il file delle forze, dell'energia e dello step del Gradient Flow
+	if (f_force_grad23 != NULL)
+	{
+		fclose(f_force_grad23);
+	}
+	if (f_ener_grad23 != NULL)
+	{
+		fclose(f_ener_grad23); 
+	}
+	if (f_step_grad23 != NULL)
+	{
+		fclose(f_step_grad23); 
+	}
+}
+
 void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const geo,
 							 CPN_Param const *const param, FILE *coolfilep, FILE *argPfilep, CPN_Conf *aux_conf)
 {
@@ -669,11 +833,11 @@ void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const
 	}
 }
 
-int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp2, CPN_Conf *conf_new, Geometry const *const geo, CPN_Param *param)
+int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp2, CPN_Conf *flow_temp3, Geometry const *const geo, CPN_Param const *const param, double step)
 {
 	int i, mu, j;
-	double c_theta = 2.0 * (param->d_beta) * N * (param->d_int_step);
-	double c_z = 2.0 * (param->d_beta) * N * (param->d_int_step);
+	double c_theta = 2.0 * (param->d_beta) * N * (step);
+	double c_z = 2.0 * (param->d_beta) * N * (step);
 	double error_abs_z, error_absU, error_abs_in, error_abs = 0.0;
 	double errorU_0, errorU_1;
 	double q, p = 2.0;
@@ -686,7 +850,9 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 	double f_theta3[2] __attribute__((aligned(DOUBLE_ALIGN)));
 
 	cmplx z_ord2[N] __attribute__((aligned(DOUBLE_ALIGN)));
-    cmplx U_ord2[2] __attribute__((aligned(DOUBLE_ALIGN)));
+	cmplx U_ord2[2] __attribute__((aligned(DOUBLE_ALIGN)));
+
+
 
 	for (i = 0; i < param->d_volume; i++)
 	{
@@ -741,9 +907,9 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 			f_theta1[mu] = F_theta(conf, geo, i, mu);
 			f_theta2[mu] = F_theta(flow_temp1, geo, i, mu);
 			f_theta3[mu] = F_theta(flow_temp2, geo, i, mu);
-		
+
 			z_ord2[mu] = conf->U[i][mu] * cexp(I * c_theta * (0.25 * f_theta1[mu] + 0.75 * f_theta2[mu]));
-			conf_new->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * (0.25 * f_theta1[mu] + 0.375 * (f_theta2[mu] + f_theta3[mu])));
+			flow_temp3->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * (0.25 * f_theta1[mu] + 0.375 * (f_theta2[mu] + f_theta3[mu])));
 		}
 		// Compute the candidate solution (two stages)
 		vector_equal(z_ord2, conf->z[i]);
@@ -751,19 +917,19 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 		vector_normalization(z_ord2);
 
 		// Compute the control solution
-		vector_equal(conf_new->z[i], conf->z[i]);
-		vec_lin_comb_4_real_coeff(conf_new->z[i], F_z_tg1, F_z_tg2, F_z_tg3, 1.0, 0.25 * c_z, 0.375 * c_z, 0.375 * c_z);
-		vector_normalization(conf_new->z[i]);
+		vector_equal(flow_temp3->z[i], conf->z[i]);
+		vec_lin_comb_4_real_coeff(flow_temp3->z[i], F_z_tg1, F_z_tg2, F_z_tg3, 1.0, 0.25 * c_z, 0.375 * c_z, 0.375 * c_z);
+		vector_normalization(flow_temp3->z[i]);
 
 		// Compute the error for z;
 		for (j = 0; j < N; j++)
-			error[j] = conf_new->z[i][j] - z_ord2[j];
+			error[j] = flow_temp3->z[i][j] - z_ord2[j];
 
 		error_abs_z = vector_abs(error);
 
 		// Do the same for U[i][mu]
-		errorU_0 = cmplx_abs((conf_new->U[i][0] - U_ord2[0]));
-		errorU_1 = cmplx_abs((conf_new->U[i][1] - U_ord2[1]));
+		errorU_0 = cmplx_abs((flow_temp3->U[i][0] - U_ord2[0]));
+		errorU_1 = cmplx_abs((flow_temp3->U[i][1] - U_ord2[1]));
 		error_absU = max(errorU_0, errorU_1);
 
 		// Take the max between the two
@@ -775,7 +941,6 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 	double safety = 0.9;
 	q = safety * pow((param->d_epsilon / (error_abs + 1e-15)), 1.0 / (p + 1.0)); // add 1e-15 to avoid dividing by zero
 
-	param->d_int_step = param->d_int_step * q;
 
 	// Limits to avoid a variation too big or too small of the step
 	if (q > 2.0)
@@ -783,7 +948,7 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 	if (q < 0.2)
 		q = 0.2;
 
-	param->d_int_step = param->d_int_step * q;
+	step = step * q;
 
 	// Accept/reject step
 	if (error_abs <= param->d_epsilon)
@@ -791,9 +956,9 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 		// STEP ACCEPTED: update using the better solution (flow_temp2, order 3)
 		for (i = 0; i < param->d_volume; i++)
 		{
-			vector_equal(conf->z[i], conf_new->z[i]);
-			conf->U[i][0] = conf_new->U[i][0];
-			conf->U[i][1] = conf_new->U[i][1];
+			vector_equal(conf->z[i], flow_temp3->z[i]);
+			conf->U[i][0] = flow_temp3->U[i][0];
+			conf->U[i][1] = flow_temp3->U[i][1];
 		}
 		return 1; // success
 	}

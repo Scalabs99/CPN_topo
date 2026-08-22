@@ -1,6 +1,6 @@
 # theory parameters
 size   8 200    # L_t L_x
-beta   1.8     # bare inverse coupling
+beta   1.0     # bare inverse coupling
 theta  0.0      # bare imaginary theta
 
 # simulation details
@@ -10,13 +10,14 @@ num_micro        4      # number of over-relaxation steps (microcanonical steps)
 num_norm         3      # normalize fields every <num_norm> steps
 save_conf_every  50     # save conf for backup every <save_conf_every> steps
 
-start 2                 # initialize conf: 0=random cold, 1=random hot, 2=start from saved conf
+start 2                # initialize conf: 0=random cold, 1=random hot, 2=start from saved conf
 
 num_cool_step    50     # number of cooling steps 
 meas_cool_every  5      # perform measures every <meas_cool_every> cool steps
 
-int_step         0.001   # integration step for the gradient flow 
-tollerance       1e-10   # tollerance for the gradient flow procedure
+int_step         1e-3    # integration step for the gradient flow 
+tolerance        1e-10   # tollerance for the gradient flow procedure
+epsilon          0.0     # used for error control in RK procedure 
 grad_steps       3000    # total number of gradient flow steps ( for the MonteCarlo ) 
 meas_grad_every  100     # perform measures every <gradevery> grad flow steps 
 
@@ -36,11 +37,11 @@ grid_max 100                     # topo potential is defined for Q € [ -<grid_
 num_single_site_stoc_upd 2500    # number of stochastic single sites updates
 
 # file names
-conf_file                 conf.dat                # save conf for backup
+conf_file                 conf8.dat                # save conf for backup
 data_file                 dati.dat                # save non-topological observables
 topo_file                 topo.dat                # save topological observables
 topoGrad_file             topograd.dat            # 
-grad_file                 grad.dat                # save the observable for the gradient flow 
+grad_file                 grad_new.dat                # save the observable for the gradient flow 
 cool_file                 cool.dat                # save the observable for the cooling 
 argP_file                 argP.dat                # save the argP for the final cooling and grad flow config 
 outCoolconf_file          outCoolconf.dat         # save the final cooling configuration 

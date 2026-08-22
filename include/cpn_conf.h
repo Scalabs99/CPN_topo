@@ -62,6 +62,7 @@ void free_CPN_conf(CPN_Conf *, CPN_Param const *const);
 // in lib/cpn_meas.c
 void perform_measures_localobs(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const, FILE *, FILE *, FILE *, CPN_Conf *);
 void perform_measure_gradient_flow(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, FILE *, FILE *, CPN_Conf *, CPN_Conf *);
+void measure_RK23(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, CPN_Conf *, CPN_Conf *, CPN_Conf *, CPN_Conf *);
 void perform_measure_cooling(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, FILE *, FILE *, CPN_Conf *);
 cmplx plaquette(CPN_Conf const *const, Geometry const *const, long const, int const mu, int const nu);
 double energy_density(CPN_Conf const *const, Geometry const *const, CPN_Param const *const);
@@ -75,7 +76,7 @@ void cooling(CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void cooling_improved(CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void gradient_flow(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const);
 void gradient_flow_tg(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const);
-int adaptive_step_RK23(CPN_Conf *, CPN_Conf *, CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param *);
+int adaptive_step_RK23(CPN_Conf *, CPN_Conf *, CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const, double);
 double compute_arg_Pol(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, long const);
 cmplx compute_Polyakov(CPN_Conf const *const, Geometry const *const, CPN_Param const *const);
 double mean_force_z_tang(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);
