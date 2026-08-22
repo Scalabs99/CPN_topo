@@ -191,7 +191,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 			fflush(f_force_grad);
 		}
 
-	} while (max(fz_mean, ftheta_mean) > 1e-9); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
+	} while (max(fz_mean, ftheta_mean) > 1e-9); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tolerance)
 
 	for (j = 0; j < more_steps; j++)
 	{
@@ -495,7 +495,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 			fflush(f_force_cool);
 		}
 
-	} while (fabs(energy_out - energy_in) > (param->d_tollerance));
+	} while (fabs(energy_out - energy_in) > (param->d_tolerance));
 
 	// compute the argP(n_x) on the final configuration
 	for (j = 0; j < Lx; j++)
