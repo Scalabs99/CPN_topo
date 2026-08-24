@@ -317,7 +317,7 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 		// perform the integration step
 		do
 		{
-			result = adaptive_step_RK23(aux_conf, flow1, flow2, flow3, geo, param, step);
+			result = adaptive_step_RK23(aux_conf, flow1, flow2, flow3, geo, param, &step);
 
 		} while (result == 0);
 
@@ -345,7 +345,7 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 		// print the modified integration step on file
 		if (f_step_grad23 != NULL)
 		{
-			fprintf(f_step_grad23, " %.16le\n", step);
+			fprintf(f_step_grad23, " %.16le\n", &step);
 			fflush(f_step_grad23);
 		}
 
@@ -833,11 +833,11 @@ void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const
 	}
 }
 
-int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp2, CPN_Conf *flow_temp3, Geometry const *const geo, CPN_Param const *const param, double step)
+int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp2, CPN_Conf *flow_temp3, Geometry const *const geo, CPN_Param const *const param, double *step)
 {
 	int i, mu, j;
-	double c_theta = 2.0 * (param->d_beta) * N * (step);
-	double c_z = 2.0 * (param->d_beta) * N * (step);
+	double c_theta = 2.0 * (param->d_beta) * N * (*step);
+	double c_z = 2.0 * (param->d_beta) * N * (*step);
 	double error_abs_z, error_absU, error_abs_in, error_abs = 0.0;
 	double errorU_0, errorU_1;
 	double q, p = 2.0;
@@ -948,7 +948,7 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 	if (q < 0.2)
 		q = 0.2;
 
-	step = step * q;
+	(*step) = (*step) * q;
 
 	// Accept/reject step
 	if (error_abs <= param->d_epsilon)
