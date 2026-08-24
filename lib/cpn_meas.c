@@ -345,7 +345,7 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 		// print the modified integration step on file
 		if (f_step_grad23 != NULL)
 		{
-			fprintf(f_step_grad23, " %.16le\n", &step);
+			fprintf(f_step_grad23, " %.16le\n", step);
 			fflush(f_step_grad23);
 		}
 
