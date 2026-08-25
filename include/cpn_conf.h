@@ -63,6 +63,7 @@ void free_CPN_conf(CPN_Conf *, CPN_Param const *const);
 void perform_measures_localobs(CPN_Conf *, CPN_Conf *, Geometry const *const, CPN_Param const *const, FILE *, FILE *, FILE *, CPN_Conf *);
 void perform_measure_gradient_flow(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, FILE *, FILE *, CPN_Conf *, CPN_Conf *);
 void measure_RK23(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, CPN_Conf *, CPN_Conf *, CPN_Conf *, CPN_Conf *);
+void measure_RK23(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, CPN_Conf *, CPN_Conf *, CPN_Conf *, CPN_Conf *);
 void perform_measure_cooling(CPN_Conf const *const, Geometry const *const, CPN_Param const *const, FILE *, FILE *, CPN_Conf *);
 cmplx plaquette(CPN_Conf const *const, Geometry const *const, long const, int const mu, int const nu);
 double energy_density(CPN_Conf const *const, Geometry const *const, CPN_Param const *const);

@@ -408,6 +408,133 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 	}
 }
 
+void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, CPN_Conf *flow1, CPN_Conf *flow2, CPN_Conf *flow3, CPN_Conf *aux_conf)
+{
+	int more_steps = 3e4, result;
+	double energy, energy_out, ftheta_mean, fz_mean; // energy_in;
+	long j;
+
+	// open the gradient flow force file
+	FILE *f_force_grad3 = fopen("forces_grad3.dat", "w");
+	FILE *f_ener_grad3 = fopen("energy_grad3.dat", "w");
+	if (f_force_grad3 != NULL)
+	{
+		fprintf(f_force_grad3, "# |F_z_tg|^2 \t |F_theta|^2\n");
+		fflush(f_force_grad3);
+	}
+
+	if (f_ener_grad3 != NULL)
+	{
+		fprintf(f_ener_grad3, "# Energy\n");
+		fflush(f_ener_grad3);
+	}
+
+	// aux_conf = conf ( we work on the aux conf and not on the conf )
+	copyconf(conf, param, aux_conf);
+
+	// compute and print the energy and the topological charge of the conf before the gradient flow
+	energy = energy_density(aux_conf, geo, param);
+
+	// print this value on the energy file
+	if (f_ener_grad3 != NULL)
+	{
+		fprintf(f_ener_grad3, " %.16le\n", energy);
+		fflush(f_ener_grad3);
+	}
+
+	// Compute the value of fz_mean and fu_mean on the starting configuration
+	fz_mean = mean_force_z_tang(aux_conf, param, geo);
+	ftheta_mean = mean_force_theta(aux_conf, param, geo);
+
+	// print these values on the forces file
+	if (f_force_grad3 != NULL)
+	{
+		fprintf(f_force_grad3, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
+		fflush(f_force_grad3);
+	}
+
+	// Initialize energy_out with the value of energy
+	energy_out = energy;
+
+	// perform gradient flow
+	do
+	{
+
+		// compute the energy before the integration step
+		// energy_in = energy_out;
+
+		// perform the integration step
+		
+		RK3_gradient_flow(aux_conf, flow1, flow2, flow3, geo, param);
+
+	
+
+		// compute the energy after the integration step
+		energy_out = energy_density(aux_conf, geo, param);
+
+		// Compute the lattice mean of the forces
+		fz_mean = mean_force_z_tang(aux_conf, param, geo);
+		ftheta_mean = mean_force_theta(aux_conf, param, geo);
+
+		// Print them on the file
+		if (f_force_grad3 != NULL)
+		{
+			fprintf(f_force_grad3, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
+			fflush(f_force_grad3);
+		}
+
+		// print this value on the energy file
+		if (f_ener_grad3 != NULL)
+		{
+			fprintf(f_ener_grad3, " %.16le\n", energy_out);
+			fflush(f_ener_grad3);
+		}
+
+
+	} while (max(fz_mean, ftheta_mean) > param->d_tolerance); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
+
+	for (j = 0; j < more_steps; j++)
+	{
+		// compute the energy before the integration step
+		// energy_in = energy_out;
+
+		RK3_gradient_flow(aux_conf, flow1, flow2, flow3, geo, param);
+		
+
+		// compute the energy after the integration step
+		energy_out = energy_density(aux_conf, geo, param);
+
+		// print this value on the energy file
+		if (f_ener_grad3 != NULL)
+		{
+			fprintf(f_ener_grad3, " %.16le\n", energy_out);
+			fflush(f_ener_grad3);
+		}
+
+		// Compute the lattice mean of the forces
+		fz_mean = mean_force_z_tang(aux_conf, param, geo);
+		ftheta_mean = mean_force_theta(aux_conf, param, geo);
+
+		// Print them on the file
+		if (f_force_grad3 != NULL)
+		{
+			fprintf(f_force_grad3, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
+			fflush(f_force_grad3);
+		}
+
+	}
+
+	// FIX: Chiudi il file delle forze, dell'energia e dello step del Gradient Flow
+	if (f_force_grad3 != NULL)
+	{
+		fclose(f_force_grad3);
+	}
+	if (f_ener_grad3 != NULL)
+	{
+		fclose(f_ener_grad3); 
+	}
+}
+
 void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const geo,
 							 CPN_Param const *const param, FILE *coolfilep, FILE *argPfilep, CPN_Conf *aux_conf)
 {
@@ -833,6 +960,7 @@ void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const
 	}
 }
 
+// Adaptive step Runge Kutta 23 scheme based on the tableau on page 116, "A first course on the numerical analysis of diff eq"
 int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp2, CPN_Conf *flow_temp3, Geometry const *const geo, CPN_Param const *const param, double *step)
 {
 	int i, mu, j;
@@ -969,6 +1097,7 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 	return 0;
 }
 
+// Runge Kutta integrator of the third order based on the same scheme used for the adaptive step 
 void RK3_gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp2, CPN_Conf *flow_temp3, Geometry const *const geo, CPN_Param const *const param)
 {
 	int i, mu; 

@@ -101,6 +101,7 @@ void real_main(char *input_file_name)
 		write_CPN_conf_on_file(&aux_conf, &param, param.d_outGradconf_file);
 
 		measure_RK23(&(conf[0]), &geo, &param, &flow_conf1, &flow_conf2, &flow_conf3, &aux_conf); 
+		measure_RK3(&(conf[0]), &geo, &param, &flow_conf1, &flow_conf2, &flow_conf3, &aux_conf);
 	}
 
 	// Monte Carlo begins
