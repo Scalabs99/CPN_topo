@@ -191,7 +191,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 			fflush(f_force_grad);
 		}
 
-	} while (max(fz_mean, ftheta_mean) > 1e-9); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tolerance)
+	} while (max(fz_mean, ftheta_mean) > param->d_tolerance); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tolerance)
 
 	for (j = 0; j < more_steps; j++)
 	{
@@ -349,7 +349,7 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 			fflush(f_step_grad23);
 		}
 
-	} while (max(fz_mean, ftheta_mean) > 1e-9); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
+	} while (max(fz_mean, ftheta_mean) > param->d_tolerance); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
 
 	for (j = 0; j < more_steps; j++)
 	{
