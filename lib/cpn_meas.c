@@ -412,7 +412,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 							 CPN_Param const *const param, FILE *coolfilep, FILE *argPfilep, CPN_Conf *aux_conf)
 {
 	int i;
-	double energy, energy_in, energy_out, fz_mean, ftheta_mean;
+	double energy, energy_out, fz_mean, ftheta_mean; //energy_in
 	double Q[3];
 	long Lx = param->d_size[1];
 	long j;
@@ -463,7 +463,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 	{
 
 		// compute the energy before the integration step
-		energy_in = energy_out;
+		// energy_in = energy_out;
 
 		// perform the cooling step
 		cooling_improved(aux_conf, geo, param);
@@ -971,7 +971,7 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 
 void RK3_gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp2, CPN_Conf *flow_temp3, Geometry const *const geo, CPN_Param const *const param)
 {
-	int i, mu, j;
+	int i, mu; 
 	double c_theta = 2.0 * (param->d_beta) * N * (param->d_int_step);
 	double c_z = 2.0 * (param->d_beta) * N * (param->d_int_step);
 	cmplx F_z_tg1[N] __attribute__((aligned(DOUBLE_ALIGN)));
