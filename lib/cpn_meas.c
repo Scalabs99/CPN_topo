@@ -410,7 +410,7 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 
 void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, CPN_Conf *flow1, CPN_Conf *flow2, CPN_Conf *flow3, CPN_Conf *aux_conf)
 {
-	int more_steps = 3e4, result;
+	int more_steps = 3e4; 
 	double energy, energy_out, ftheta_mean, fz_mean; // energy_in;
 	long j;
 
