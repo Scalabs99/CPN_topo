@@ -495,7 +495,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 			fflush(f_force_cool);
 		}
 
-	} while (fabs(energy_out - energy_in) > (param->d_tolerance));
+	} while (max(fz_mean, ftheta_mean) > param->d_tolerance);
 
 	// compute the argP(n_x) on the final configuration
 	for (j = 0; j < Lx; j++)
@@ -967,6 +967,94 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 	// STEP REJECTED: the error is to big
 	// the starting conf remains the same
 	return 0;
+}
+
+void RK3_gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp2, CPN_Conf *flow_temp3, Geometry const *const geo, CPN_Param const *const param)
+{
+	int i, mu, j;
+	double c_theta = 2.0 * (param->d_beta) * N * (param->d_int_step);
+	double c_z = 2.0 * (param->d_beta) * N * (param->d_int_step);
+	cmplx F_z_tg1[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	cmplx F_z_tg2[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	cmplx F_z_tg3[N] __attribute__((aligned(DOUBLE_ALIGN)));
+	double f_theta1[2] __attribute__((aligned(DOUBLE_ALIGN)));
+	double f_theta2[2] __attribute__((aligned(DOUBLE_ALIGN)));
+	double f_theta3[2] __attribute__((aligned(DOUBLE_ALIGN)));
+
+
+
+	for (i = 0; i < param->d_volume; i++)
+	{
+		// Compute the force F_theta and the Euler evolution step
+		for (mu = 0; mu < 2; mu++)
+		{
+			f_theta1[mu] = F_theta(conf, geo, i, mu);
+			flow_temp1->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * (2.0 / 3) * f_theta1[mu]); // this is csi 2
+		}
+		// Now repeat the same steps with the z field
+		// Compute csi2
+		force_z_tangent(conf, geo, i, F_z_tg1);
+		vector_times_real_const(F_z_tg1, (2.0 / 3) * c_z);
+		// Assign the value of conf->z[i] to flow_temp->z[i]
+		vector_equal(flow_temp1->z[i], conf->z[i]);
+		// Euler step
+		vector_sum(flow_temp1->z[i], F_z_tg1);
+		// normalize z[i]
+		vector_normalization(flow_temp1->z[i]);
+	}
+
+	for (i = 0; i < param->d_volume; i++)
+	{
+		// Compute the force F_theta and the Euler evolution step
+		for (mu = 0; mu < 2; mu++)
+		{
+			f_theta2[mu] = F_theta(flow_temp1, geo, i, mu);
+			flow_temp2->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * (2.0 / 3) * f_theta2[mu]); // this is csi 3
+		}
+		// Now repeat the same steps with the z field
+		// Compute csi3
+		force_z_tangent(flow_temp1, geo, i, F_z_tg2);
+		vector_times_real_const(F_z_tg2, (2.0 / 3) * c_z);
+		// Assign the value of conf->z[i] to flow_temp->z[i]
+		vector_equal(flow_temp2->z[i], conf->z[i]);
+		// Euler step
+		vector_sum(flow_temp2->z[i], F_z_tg2);
+		// normalize z[i]
+		vector_normalization(flow_temp2->z[i]);
+	}
+
+	for (i = 0; i < param->d_volume; i++)
+	{
+
+		// Compute f(csi3), f(csi2), f(csi1)
+		force_z_tangent(conf, geo, i, F_z_tg1);
+		force_z_tangent(flow_temp1, geo, i, F_z_tg2);
+		force_z_tangent(flow_temp2, geo, i, F_z_tg3);
+
+		for (mu = 0; mu < 2; mu++)
+		{
+			f_theta1[mu] = F_theta(conf, geo, i, mu);
+			f_theta2[mu] = F_theta(flow_temp1, geo, i, mu);
+			f_theta3[mu] = F_theta(flow_temp2, geo, i, mu);
+
+			flow_temp3->U[i][mu] = conf->U[i][mu] * cexp(I * c_theta * (0.25 * f_theta1[mu] + 0.375 * (f_theta2[mu] + f_theta3[mu])));
+		}
+
+		// Compute the third order solution
+		vector_equal(flow_temp3->z[i], conf->z[i]);
+		vec_lin_comb_4_real_coeff(flow_temp3->z[i], F_z_tg1, F_z_tg2, F_z_tg3, 1.0, 0.25 * c_z, 0.375 * c_z, 0.375 * c_z);
+		vector_normalization(flow_temp3->z[i]);
+
+	}
+
+	for (i = 0; i < param->d_volume; i++)
+	{
+		vector_equal(conf->z[i], flow_temp3->z[i]);
+		conf->U[i][0] = flow_temp3->U[i][0];
+		conf->U[i][1] = flow_temp3->U[i][1];
+	}
+
+	
 }
 
 // compute the arg(P(n_x)) for the cooled ( either with GF or cooling ) configuration
