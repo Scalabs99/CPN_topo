@@ -307,6 +307,8 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 	// Initialize energy_out with the value of energy
 	energy_out = energy;
 
+	printf("Tolleranza effettiva in memoria: %lf\n", param->d_tolerance);
+
 	// perform gradient flow
 	do
 	{
