@@ -246,9 +246,9 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 
 void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, CPN_Conf *flow1, CPN_Conf *flow2, CPN_Conf *flow3, CPN_Conf *aux_conf)
 {
-	int more_steps = 3e4, result;
+	int result;
 	double energy, energy_out, ftheta_mean, fz_mean, step; // energy_in;
-	long j;
+	// long j;
 
 	// initialize the step variable 
 	step = param->d_int_step; 
@@ -351,7 +351,7 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 
 	} while (max(fz_mean, ftheta_mean) > param->d_tolerance); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
 
-	for (j = 0; j < more_steps; j++)
+	/*for (j = 0; j < more_steps; j++)
 	{
 		// compute the energy before the integration step
 		// energy_in = energy_out;
@@ -391,7 +391,7 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 		}
 
 
-	}
+	} */
 
 	// FIX: Chiudi il file delle forze, dell'energia e dello step del Gradient Flow
 	if (f_force_grad23 != NULL)
