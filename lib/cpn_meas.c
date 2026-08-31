@@ -340,14 +340,14 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 		// print this value on the energy file
 		if (f_ener_grad23 != NULL)
 		{
-			fprintf(f_ener_grad23, " %.16le\n", energy_out);
+			fprintf(f_ener_grad23, "%.16le\n", energy_out);
 			fflush(f_ener_grad23);
 		}
 
 		// print the modified integration step on file
 		if (f_step_grad23 != NULL)
 		{
-			fprintf(f_step_grad23, " %.16le\n", step);
+			fprintf(f_step_grad23, "%.16le\n", step);
 			fflush(f_step_grad23);
 		}
 
@@ -488,7 +488,7 @@ void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Para
 		// print this value on the energy file
 		if (f_ener_grad3 != NULL)
 		{
-			fprintf(f_ener_grad3, " %.16le\n", energy_out);
+			fprintf(f_ener_grad3, "%.16le\n", energy_out);
 			fflush(f_ener_grad3);
 		}
 
