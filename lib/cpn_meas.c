@@ -265,13 +265,13 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 
 	if (f_ener_grad23 != NULL)
 	{
-		fprintf(f_ener_grad23, "# Energy\n");
+		fprintf(f_ener_grad23, "Energy\n");
 		fflush(f_ener_grad23);
 	}
 
 	if (f_step_grad23 != NULL)
 	{
-		fprintf(f_step_grad23, "# Step\n");
+		fprintf(f_step_grad23, "Step\n");
 		fflush(f_step_grad23);
 	}
 
@@ -284,7 +284,7 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 	// print this value on the energy file
 	if (f_ener_grad23 != NULL)
 	{
-		fprintf(f_ener_grad23, " %.16le\n", energy);
+		fprintf(f_ener_grad23, "%.16le\n", energy);
 		fflush(f_ener_grad23);
 	}
 
@@ -427,7 +427,7 @@ void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Para
 
 	if (f_ener_grad3 != NULL)
 	{
-		fprintf(f_ener_grad3, "# Energy\n");
+		fprintf(f_ener_grad3, "Energy\n");
 		fflush(f_ener_grad3);
 	}
 
@@ -440,7 +440,7 @@ void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Para
 	// print this value on the energy file
 	if (f_ener_grad3 != NULL)
 	{
-		fprintf(f_ener_grad3, " %.16le\n", energy);
+		fprintf(f_ener_grad3, "%.16le\n", energy);
 		fflush(f_ener_grad3);
 	}
 
