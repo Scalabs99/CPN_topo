@@ -84,6 +84,7 @@ cmplx compute_Polyakov(CPN_Conf const *const, Geometry const *const, CPN_Param c
 double mean_force_z_tang(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);
 double mean_force_U(CPN_Conf const *const, CPN_Param const *const, Geometry const *const);
 double mean_force_theta(CPN_Conf const *const, CPN_Param const *const, Geometry const *const); 
+void compute_grad_term(CPN_Conf *, CPN_Param const *const, Geometry const *const); 
 
 // in lib/cpn_update.c
 void parallel_tempering_with_hierarchic_update(CPN_Conf *, Rectangle const *const, Acc_Swap *,

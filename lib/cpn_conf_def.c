@@ -498,12 +498,15 @@ void fix_gauge_conf(CPN_Conf *conf, CPN_Param const *const param, Geometry const
 		conf->phase_zN[i] = arg(conf->z[i][N-1]); 
 	}
 
+
 	for (i = 0; i < V; i++)
 	{
 		for (j = 0; j < N; j++)
 		{
 			conf->z[i][j] = conf->z[i][j] * cexp(-I * conf->phase_zN[i]);
 		}
+
+		conf->z[i][N-1] = fabs(creal(conf->z[i][N-1])) + I * 0.0; 
 
 		conf->U[i][0] = cexp(-I * conf->phase_zN[i]) * conf->U[i][0] * cexp(+I * conf->phase_zN[geo->up[i][0]]);
 		conf->U[i][1] = cexp(-I * conf->phase_zN[i]) * conf->U[i][1] * cexp(+I * conf->phase_zN[geo->up[i][1]]);

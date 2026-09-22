@@ -250,8 +250,8 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 	double energy, energy_out, ftheta_mean, fz_mean, step; // energy_in;
 	// long j;
 
-	// initialize the step variable 
-	step = param->d_int_step; 
+	// initialize the step variable
+	step = param->d_int_step;
 
 	// open the gradient flow force file
 	FILE *f_force_grad23 = fopen("forces_grad23.dat", "w");
@@ -402,17 +402,17 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 	}
 	if (f_ener_grad23 != NULL)
 	{
-		fclose(f_ener_grad23); 
+		fclose(f_ener_grad23);
 	}
 	if (f_step_grad23 != NULL)
 	{
-		fclose(f_step_grad23); 
+		fclose(f_step_grad23);
 	}
 }
 
 void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, CPN_Conf *flow1, CPN_Conf *flow2, CPN_Conf *flow3, CPN_Conf *aux_conf)
 {
-	int more_steps = 3e4; 
+	int more_steps = 3e4;
 	double energy, energy_out, ftheta_mean, fz_mean; // energy_in;
 	long j;
 
@@ -466,10 +466,8 @@ void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Para
 		// energy_in = energy_out;
 
 		// perform the integration step
-		
-		RK3_gradient_flow(aux_conf, flow1, flow2, flow3, geo, param);
 
-	
+		RK3_gradient_flow(aux_conf, flow1, flow2, flow3, geo, param);
 
 		// compute the energy after the integration step
 		energy_out = energy_density(aux_conf, geo, param);
@@ -492,7 +490,6 @@ void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Para
 			fflush(f_ener_grad3);
 		}
 
-
 	} while (max(fz_mean, ftheta_mean) > param->d_tolerance); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
 
 	for (j = 0; j < more_steps; j++)
@@ -501,7 +498,6 @@ void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Para
 		// energy_in = energy_out;
 
 		RK3_gradient_flow(aux_conf, flow1, flow2, flow3, geo, param);
-		
 
 		// compute the energy after the integration step
 		energy_out = energy_density(aux_conf, geo, param);
@@ -523,7 +519,6 @@ void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Para
 			fprintf(f_force_grad3, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
 			fflush(f_force_grad3);
 		}
-
 	}
 
 	// FIX: Chiudi il file delle forze, dell'energia e dello step del Gradient Flow
@@ -533,7 +528,7 @@ void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Para
 	}
 	if (f_ener_grad3 != NULL)
 	{
-		fclose(f_ener_grad3); 
+		fclose(f_ener_grad3);
 	}
 }
 
@@ -541,7 +536,7 @@ void perform_measure_cooling(CPN_Conf const *const conf, Geometry const *const g
 							 CPN_Param const *const param, FILE *coolfilep, FILE *argPfilep, CPN_Conf *aux_conf)
 {
 	int i;
-	double energy, energy_out, fz_mean, ftheta_mean; //energy_in
+	double energy, energy_out, fz_mean, ftheta_mean; // energy_in
 	double Q[3];
 	long Lx = param->d_size[1];
 	long j;
@@ -982,8 +977,6 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 	cmplx z_ord2[N] __attribute__((aligned(DOUBLE_ALIGN)));
 	cmplx U_ord2[2] __attribute__((aligned(DOUBLE_ALIGN)));
 
-
-
 	for (i = 0; i < param->d_volume; i++)
 	{
 		// Compute the force F_theta and the Euler evolution step
@@ -1072,7 +1065,6 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 	q = safety * pow((param->d_epsilon / (error_abs + 1e-15)), 1.0 / (p + 1.0)); // add 1e-15 to avoid dividing by zero
 	printf("Fattore q = %f, Nuovo step = %e\n", q, *step);
 
-
 	// Limits to avoid a variation too big or too small of the step
 	if (q > 2.0)
 		q = 2.0;
@@ -1095,14 +1087,14 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 	}
 
 	// STEP REJECTED: the error is to big
-	// the starting conf remains the same
+	// the starting conf remains the same, but the step is now smaller!!!
 	return 0;
 }
 
-// Runge Kutta integrator of the third order based on the same scheme used for the adaptive step 
+// Runge Kutta integrator of the third order based on the same scheme used for the adaptive step
 void RK3_gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp2, CPN_Conf *flow_temp3, Geometry const *const geo, CPN_Param const *const param)
 {
-	int i, mu; 
+	int i, mu;
 	double c_theta = 2.0 * (param->d_beta) * N * (param->d_int_step);
 	double c_z = 2.0 * (param->d_beta) * N * (param->d_int_step);
 	cmplx F_z_tg1[N] __attribute__((aligned(DOUBLE_ALIGN)));
@@ -1111,8 +1103,6 @@ void RK3_gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 	double f_theta1[2] __attribute__((aligned(DOUBLE_ALIGN)));
 	double f_theta2[2] __attribute__((aligned(DOUBLE_ALIGN)));
 	double f_theta3[2] __attribute__((aligned(DOUBLE_ALIGN)));
-
-
 
 	for (i = 0; i < param->d_volume; i++)
 	{
@@ -1175,7 +1165,6 @@ void RK3_gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 		vector_equal(flow_temp3->z[i], conf->z[i]);
 		vec_lin_comb_4_real_coeff(flow_temp3->z[i], F_z_tg1, F_z_tg2, F_z_tg3, 1.0, 0.25 * c_z, 0.375 * c_z, 0.375 * c_z);
 		vector_normalization(flow_temp3->z[i]);
-
 	}
 
 	for (i = 0; i < param->d_volume; i++)
@@ -1184,8 +1173,6 @@ void RK3_gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 		conf->U[i][0] = flow_temp3->U[i][0];
 		conf->U[i][1] = flow_temp3->U[i][1];
 	}
-
-	
 }
 
 // compute the arg(P(n_x)) for the cooled ( either with GF or cooling ) configuration
@@ -1309,6 +1296,32 @@ double mean_force_theta(CPN_Conf const *const conf, CPN_Param const *const param
 	ftheta_sq_mean = ftheta_sq_mean / (double)param->d_volume;
 
 	return ftheta_sq_mean;
+}
+
+double compute_grad_term(CPN_Conf *conf, CPN_Param const *const param, Geometry const *const geo)
+{
+	int i;
+	fix_gauge_conf(conf, param, geo);
+	FILE *f_grad_term = fopen("grad_term.dat", "w");
+	if (f_grad_term != NULL)
+	{
+		fprintf(f_grad_term, "i \t zN(x+1)/zN(x)\n");
+		fflush(f_grad_term);
+	}
+	for (i = 0; i < param->d_volume; i++)
+	{
+		double frac = 0.0;
+		frac = creal(conf->z[geo->up[i][1]][N - 1])/ creal(conf->z[i][N - 1]);
+		if (f_force_grad != NULL)
+		{
+			fprintf(f_force_grad, "%d \t %.16le\n", i, frac);
+			fflush(f_force_grad);
+		}
+	}
+	if (f_grad_term != NULL)
+	{
+		fclose(f_grad_term);
+	}
 }
 
 #endif
