@@ -1298,7 +1298,7 @@ double mean_force_theta(CPN_Conf const *const conf, CPN_Param const *const param
 	return ftheta_sq_mean;
 }
 
-double compute_grad_term(CPN_Conf *conf, CPN_Param const *const param, Geometry const *const geo)
+void compute_grad_term(CPN_Conf *conf, CPN_Param const *const param, Geometry const *const geo)
 {
 	int i;
 	fix_gauge_conf(conf, param, geo);
@@ -1312,10 +1312,10 @@ double compute_grad_term(CPN_Conf *conf, CPN_Param const *const param, Geometry 
 	{
 		double frac = 0.0;
 		frac = creal(conf->z[geo->up[i][1]][N - 1])/ creal(conf->z[i][N - 1]);
-		if (f_force_grad != NULL)
+		if (f_grad_term != NULL)
 		{
-			fprintf(f_force_grad, "%d \t %.16le\n", i, frac);
-			fflush(f_force_grad);
+			fprintf(f_grad_term, "%d \t %.16le\n", i, frac);
+			fflush(f_grad_term);
 		}
 	}
 	if (f_grad_term != NULL)
