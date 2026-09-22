@@ -1305,7 +1305,7 @@ void compute_grad_term(CPN_Conf *conf, CPN_Param const *const param, Geometry co
 	FILE *f_grad_term = fopen("grad_term.dat", "w");
 	if (f_grad_term != NULL)
 	{
-		fprintf(f_grad_term, "i \t zN(x+1)/zN(x)\n");
+		fprintf(f_grad_term, "i \t zN(x+1)/zN(x) \t zN(x)\n");
 		fflush(f_grad_term);
 	}
 	for (i = 0; i < param->d_volume; i++)
@@ -1314,7 +1314,7 @@ void compute_grad_term(CPN_Conf *conf, CPN_Param const *const param, Geometry co
 		frac = creal(conf->z[geo->up[i][1]][N - 1])/ creal(conf->z[i][N - 1]);
 		if (f_grad_term != NULL)
 		{
-			fprintf(f_grad_term, "%d \t %.16le\n", i, frac);
+			fprintf(f_grad_term, "%d \t %.16le \t %.16le\n", i, frac, creal(conf->z[i][N-1]));
 			fflush(f_grad_term);
 		}
 	}
