@@ -26,7 +26,7 @@ void real_main(char *input_file_name)
 	RNG_Param rng_state;
 	time_t start_date, finish_date;
 	clock_t start_time, finish_time;
-	FILE *datafilep, *swaptrackfilep, *topofilep, *topogradfilep, *coolfilep, *gradfilep, *argPfilep;
+	FILE *datafilep, *swaptrackfilep, *topofilep, *topogradfilep, *gradfilep;
 	int i;
 
 	// read input file
@@ -43,14 +43,8 @@ void real_main(char *input_file_name)
 
 	init_topograd_file(&topogradfilep, &param);
 
-	// open cooling data file
-	init_cool_file(&coolfilep, &param);
-
 	// open gradient flow data file
 	init_grad_file(&gradfilep, &param);
-
-	// open argPcool data file
-	init_argP_file(&argPfilep, &param);
 
 	// open swap tracking file
 	init_swap_track_file(&swaptrackfilep, &param);
@@ -96,14 +90,11 @@ void real_main(char *input_file_name)
 	{
 		// perform_measure_cooling(&(conf[0]), &geo, &param, coolfilep, argPfilep, &aux_conf); uncomment to perform cooling
 		// write_CPN_conf_on_file(&aux_conf, &param, param.d_outCoolconf_file); uncomment to save final cooling configuration
-		perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, argPfilep, &flow_conf1, &aux_conf);
+		perform_measure_gradient_flow(&(conf[0]), &geo, &param, gradfilep, &flow_conf1, &flow_conf2, &flow_conf3, &aux_conf);
 		write_CPN_conf_on_file(&aux_conf, &param, param.d_outGradconf_file);
-
-		measure_RK23(&(conf[0]), &geo, &param, &flow_conf1, &flow_conf2, &flow_conf3, &aux_conf);
-		measure_RK3(&(conf[0]), &geo, &param, &flow_conf1, &flow_conf2, &flow_conf3, &aux_conf);
 	}
 
-	if (param.d_MC_step == 0)
+	if (param.d_MC_step == 0 && param.d_int_step == 0)
 	{
 		compute_grad_term(&(conf[0]), &param, &geo);
 	}
@@ -161,15 +152,9 @@ void real_main(char *input_file_name)
 	// close topograd file
 	fclose(topogradfilep);
 
-	// close gradient flow and
-	if (coolfilep != NULL)
-		fclose(coolfilep);
+	// close gradient flow file
 	if (gradfilep != NULL)
 		fclose(gradfilep);
-
-	// close argPfile
-	if (argPfilep != NULL)
-		fclose(argPfilep);
 
 	// close swap tracking file
 	end_swap_track_file(&swaptrackfilep, &param);

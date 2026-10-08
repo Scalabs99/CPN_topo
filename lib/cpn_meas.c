@@ -106,21 +106,27 @@ void perform_measures_localobs(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry con
 }
 
 void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *const geo,
-								   CPN_Param const *const param, FILE *gradfilep, FILE *argPfilep, CPN_Conf *flow_temp, CPN_Conf *aux_conf)
+								   CPN_Param const *const param, FILE *gradfilep, CPN_Conf *flow1, CPN_Conf *flow2, CPN_Conf *flow3, CPN_Conf *aux_conf)
 {
-	int i, more_steps = 3e4;
-	double energy, energy_out, ftheta_mean, fz_mean; // energy_in;
+	int i, more_steps=1e4, result;
+	double energy, energy_out, ftheta_mean, fz_tg_mean, step; // energy_in;
 	double Q[3];
-	long Lx = param->d_size[1];
 	long j;
-	double arg_P;
 
-	// open the gradient flow force file
+	step = param->d_int_step; 
+
 	FILE *f_force_grad = fopen("forces_grad.dat", "w");
+	FILE *f_step_grad23 = fopen("step_grad23.dat", "w");
 	if (f_force_grad != NULL)
 	{
-		fprintf(f_force_grad, "# |F_z_tg|^2 \t |F_theta|^2\n");
+		fprintf(f_force_grad, "%-25s %-25s\n", "|F_z_tg|^2", "|F_theta|^2");
 		fflush(f_force_grad);
+	}
+
+	if (f_step_grad23 != NULL)
+	{
+		fprintf(f_step_grad23, "Step\n");
+		fflush(f_step_grad23);
 	}
 
 	// aux_conf = conf ( we work on the aux conf and not on the conf )
@@ -142,163 +148,15 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 	fflush(gradfilep);
 
 	// Compute the value of fz_mean and fu_mean on the starting configuration
-	fz_mean = mean_force_z_tang(aux_conf, param, geo);
+	fz_tg_mean = mean_force_z_tang(aux_conf, param, geo);
 	ftheta_mean = mean_force_theta(aux_conf, param, geo);
 
 	// print these values on the forces file
 	if (f_force_grad != NULL)
 	{
-		fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
+		fprintf(f_force_grad, "%-25.16le %-25.16le\n", fz_tg_mean, ftheta_mean);
 		fflush(f_force_grad);
 	}
-	// Initialize energy_out with the value of energy
-	energy_out = energy;
-
-	// perform gradient flow
-	do
-	{
-
-		// compute the energy before the integration step
-		// energy_in = energy_out;
-
-		// perform the integration step
-		gradient_flow_tg(aux_conf, flow_temp, geo, param);
-
-		// compute the energy after the integration step
-		energy_out = energy_density(aux_conf, geo, param);
-
-		// compute the topological charge of the configuration after the integration step
-		for (i = 0; i < 3; i++)
-		{
-			Q[i] = topo_charge(aux_conf, geo, param, i);
-		}
-
-		// print the energy and the topological charge of the out configuration
-		fprintf(gradfilep, "%.16lf", energy_out);
-		for (i = 0; i < 3; i++)
-			fprintf(gradfilep, " %.16lf", Q[i]);
-		fprintf(gradfilep, "\n");
-		fflush(gradfilep);
-
-		// Compute the lattice mean of the forces
-		fz_mean = mean_force_z_tang(aux_conf, param, geo);
-		ftheta_mean = mean_force_theta(aux_conf, param, geo);
-
-		// Print them on the file
-		if (f_force_grad != NULL)
-		{
-			fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
-			fflush(f_force_grad);
-		}
-
-	} while (max(fz_mean, ftheta_mean) > param->d_tolerance); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tolerance)
-
-	for (j = 0; j < more_steps; j++)
-	{
-		// compute the energy before the integration step
-		// energy_in = energy_out;
-
-		// perform the integration step
-		gradient_flow_tg(aux_conf, flow_temp, geo, param);
-
-		// compute the energy after the integration step
-		energy_out = energy_density(aux_conf, geo, param);
-
-		// compute the topological charge of the configuration after the integration step
-		for (i = 0; i < 3; i++)
-		{
-			Q[i] = topo_charge(aux_conf, geo, param, i);
-		}
-
-		// print the energy and the topological charge of the out configuration
-		fprintf(gradfilep, "%.16lf", energy_out);
-		for (i = 0; i < 3; i++)
-			fprintf(gradfilep, " %.16lf", Q[i]);
-		fprintf(gradfilep, "\n");
-		fflush(gradfilep);
-
-		// Compute the lattice mean of the forces
-		fz_mean = mean_force_z_tang(aux_conf, param, geo);
-		ftheta_mean = mean_force_theta(aux_conf, param, geo);
-
-		// Print them on the file
-		if (f_force_grad != NULL)
-		{
-			fprintf(f_force_grad, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
-			fflush(f_force_grad);
-		}
-	}
-
-	// compute the argP(n_x) on the final configuration
-	for (j = 0; j < Lx; j++)
-	{
-		arg_P = compute_arg_Pol(aux_conf, geo, param, j);
-		fprintf(argPfilep, "%ld %.16lf\n", j, arg_P);
-		fflush(argPfilep);
-	}
-
-	// FIX: Chiudi il file delle forze del Gradient Flow
-	if (f_force_grad != NULL)
-	{
-		fclose(f_force_grad);
-	}
-}
-
-void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, CPN_Conf *flow1, CPN_Conf *flow2, CPN_Conf *flow3, CPN_Conf *aux_conf)
-{
-	int result;
-	double energy, energy_out, ftheta_mean, fz_mean, step; // energy_in;
-	// long j;
-
-	// initialize the step variable
-	step = param->d_int_step;
-
-	// open the gradient flow force file
-	FILE *f_force_grad23 = fopen("forces_grad23.dat", "w");
-	FILE *f_ener_grad23 = fopen("energy_grad23.dat", "w");
-	FILE *f_step_grad23 = fopen("step_grad23.dat", "w");
-	if (f_force_grad23 != NULL)
-	{
-		fprintf(f_force_grad23, "# |F_z_tg|^2 \t |F_theta|^2\n");
-		fflush(f_force_grad23);
-	}
-
-	if (f_ener_grad23 != NULL)
-	{
-		fprintf(f_ener_grad23, "Energy\n");
-		fflush(f_ener_grad23);
-	}
-
-	if (f_step_grad23 != NULL)
-	{
-		fprintf(f_step_grad23, "Step\n");
-		fflush(f_step_grad23);
-	}
-
-	// aux_conf = conf ( we work on the aux conf and not on the conf )
-	copyconf(conf, param, aux_conf);
-
-	// compute and print the energy and the topological charge of the conf before the gradient flow
-	energy = energy_density(aux_conf, geo, param);
-
-	// print this value on the energy file
-	if (f_ener_grad23 != NULL)
-	{
-		fprintf(f_ener_grad23, "%.16le\n", energy);
-		fflush(f_ener_grad23);
-	}
-
-	// Compute the value of fz_mean and fu_mean on the starting configuration
-	fz_mean = mean_force_z_tang(aux_conf, param, geo);
-	ftheta_mean = mean_force_theta(aux_conf, param, geo);
-
-	// print these values on the forces file
-	if (f_force_grad23 != NULL)
-	{
-		fprintf(f_force_grad23, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
-		fflush(f_force_grad23);
-	}
-
 	if (f_step_grad23 != NULL)
 	{
 		fprintf(f_step_grad23, "%.16le\n", step);
@@ -307,8 +165,6 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 	// Initialize energy_out with the value of energy
 	energy_out = energy;
 
-	printf("Tolleranza effettiva in memoria: %lf\n", param->d_tolerance);
-
 	// perform gradient flow
 	do
 	{
@@ -326,209 +182,85 @@ void measure_RK23(CPN_Conf const *const conf, Geometry const *const geo, CPN_Par
 		// compute the energy after the integration step
 		energy_out = energy_density(aux_conf, geo, param);
 
+		// compute the topological charge of the configuration after the integration step
+		for (i = 0; i < 3; i++)
+		{
+			Q[i] = topo_charge(aux_conf, geo, param, i);
+		}
+
+		// print the energy and the topological charge of the out configuration
+		fprintf(gradfilep, "%.16lf", energy_out);
+		for (i = 0; i < 3; i++)
+			fprintf(gradfilep, " %.16lf", Q[i]);
+		fprintf(gradfilep, "\n");
+		fflush(gradfilep);
+
 		// Compute the lattice mean of the forces
-		fz_mean = mean_force_z_tang(aux_conf, param, geo);
+		fz_tg_mean = mean_force_z_tang(aux_conf, param, geo);
 		ftheta_mean = mean_force_theta(aux_conf, param, geo);
 
-		// Print them on the file
-		if (f_force_grad23 != NULL)
+		if (f_force_grad != NULL)
 		{
-			fprintf(f_force_grad23, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
-			fflush(f_force_grad23);
+			fprintf(f_force_grad, "%-25.16le %-25.16le\n", fz_tg_mean, ftheta_mean);
+			fflush(f_force_grad);
 		}
-
-		// print this value on the energy file
-		if (f_ener_grad23 != NULL)
-		{
-			fprintf(f_ener_grad23, "%.16le\n", energy_out);
-			fflush(f_ener_grad23);
-		}
-
-		// print the modified integration step on file
 		if (f_step_grad23 != NULL)
 		{
 			fprintf(f_step_grad23, "%.16le\n", step);
 			fflush(f_step_grad23);
 		}
 
-	} while (max(fz_mean, ftheta_mean) > param->d_tolerance); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
-
-	/*for (j = 0; j < more_steps; j++)
-	{
-		// compute the energy before the integration step
-		// energy_in = energy_out;
-
-		do
-		{
-			// perform the integration step
-			result = adaptive_step_RK23(aux_conf, flow1, flow2, flow3, geo, param, &step);
-		} while (result == 0);
-
-		// compute the energy after the integration step
-		energy_out = energy_density(aux_conf, geo, param);
-
-		// print this value on the energy file
-		if (f_ener_grad23 != NULL)
-		{
-			fprintf(f_ener_grad23, " %.16le\n", energy_out);
-			fflush(f_ener_grad23);
-		}
-
-		// Compute the lattice mean of the forces
-		fz_mean = mean_force_z_tang(aux_conf, param, geo);
-		ftheta_mean = mean_force_theta(aux_conf, param, geo);
-
-		// Print them on the file
-		if (f_force_grad23 != NULL)
-		{
-			fprintf(f_force_grad23, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
-			fflush(f_force_grad23);
-		}
-
-		// print the modified integration step on file
-		if (f_step_grad23 != NULL)
-		{
-			fprintf(f_step_grad23, " %.16le\n", step);
-			fflush(f_step_grad23);
-		}
-
-
-	} */
-
-	// FIX: Chiudi il file delle forze, dell'energia e dello step del Gradient Flow
-	if (f_force_grad23 != NULL)
-	{
-		fclose(f_force_grad23);
-	}
-	if (f_ener_grad23 != NULL)
-	{
-		fclose(f_ener_grad23);
-	}
-	if (f_step_grad23 != NULL)
-	{
-		fclose(f_step_grad23);
-	}
-}
-
-void measure_RK3(CPN_Conf const *const conf, Geometry const *const geo, CPN_Param const *const param, CPN_Conf *flow1, CPN_Conf *flow2, CPN_Conf *flow3, CPN_Conf *aux_conf)
-{
-	int more_steps = 3e4;
-	double energy, energy_out, ftheta_mean, fz_mean; // energy_in;
-	long j;
-
-	// open the gradient flow force file
-	FILE *f_force_grad3 = fopen("forces_grad3.dat", "w");
-	FILE *f_ener_grad3 = fopen("energy_grad3.dat", "w");
-	if (f_force_grad3 != NULL)
-	{
-		fprintf(f_force_grad3, "# |F_z_tg|^2 \t |F_theta|^2\n");
-		fflush(f_force_grad3);
-	}
-
-	if (f_ener_grad3 != NULL)
-	{
-		fprintf(f_ener_grad3, "Energy\n");
-		fflush(f_ener_grad3);
-	}
-
-	// aux_conf = conf ( we work on the aux conf and not on the conf )
-	copyconf(conf, param, aux_conf);
-
-	// compute and print the energy and the topological charge of the conf before the gradient flow
-	energy = energy_density(aux_conf, geo, param);
-
-	// print this value on the energy file
-	if (f_ener_grad3 != NULL)
-	{
-		fprintf(f_ener_grad3, "%.16le\n", energy);
-		fflush(f_ener_grad3);
-	}
-
-	// Compute the value of fz_mean and fu_mean on the starting configuration
-	fz_mean = mean_force_z_tang(aux_conf, param, geo);
-	ftheta_mean = mean_force_theta(aux_conf, param, geo);
-
-	// print these values on the forces file
-	if (f_force_grad3 != NULL)
-	{
-		fprintf(f_force_grad3, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
-		fflush(f_force_grad3);
-	}
-
-	// Initialize energy_out with the value of energy
-	energy_out = energy;
-
-	// perform gradient flow
-	do
-	{
-
-		// compute the energy before the integration step
-		// energy_in = energy_out;
-
-		// perform the integration step
-
-		RK3_gradient_flow(aux_conf, flow1, flow2, flow3, geo, param);
-
-		// compute the energy after the integration step
-		energy_out = energy_density(aux_conf, geo, param);
-
-		// Compute the lattice mean of the forces
-		fz_mean = mean_force_z_tang(aux_conf, param, geo);
-		ftheta_mean = mean_force_theta(aux_conf, param, geo);
-
-		// Print them on the file
-		if (f_force_grad3 != NULL)
-		{
-			fprintf(f_force_grad3, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
-			fflush(f_force_grad3);
-		}
-
-		// print this value on the energy file
-		if (f_ener_grad3 != NULL)
-		{
-			fprintf(f_ener_grad3, "%.16le\n", energy_out);
-			fflush(f_ener_grad3);
-		}
-
-	} while (max(fz_mean, ftheta_mean) > param->d_tolerance); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tollerance)
+	} while (max(fz_tg_mean, ftheta_mean) > param->d_tolerance); // max(fz_mean, ftheta_mean) > 1e-9 , fabs(energy_out - energy_in) > (param->d_tolerance)
 
 	for (j = 0; j < more_steps; j++)
 	{
 		// compute the energy before the integration step
 		// energy_in = energy_out;
 
-		RK3_gradient_flow(aux_conf, flow1, flow2, flow3, geo, param);
+		// perform the integration step
+		do
+		{
+			result = adaptive_step_RK23(aux_conf, flow1, flow2, flow3, geo, param, &step);
+
+		} while (result == 0);
 
 		// compute the energy after the integration step
 		energy_out = energy_density(aux_conf, geo, param);
 
-		// print this value on the energy file
-		if (f_ener_grad3 != NULL)
+		// compute the topological charge of the configuration after the integration step
+		for (i = 0; i < 3; i++)
 		{
-			fprintf(f_ener_grad3, " %.16le\n", energy_out);
-			fflush(f_ener_grad3);
+			Q[i] = topo_charge(aux_conf, geo, param, i);
 		}
 
+		// print the energy and the topological charge of the out configuration
+		fprintf(gradfilep, "%.16lf", energy_out);
+		for (i = 0; i < 3; i++)
+			fprintf(gradfilep, " %.16lf", Q[i]);
+		fprintf(gradfilep, "\n");
+		fflush(gradfilep);
+
 		// Compute the lattice mean of the forces
-		fz_mean = mean_force_z_tang(aux_conf, param, geo);
+		fz_tg_mean = mean_force_z_tang(aux_conf, param, geo);
 		ftheta_mean = mean_force_theta(aux_conf, param, geo);
 
 		// Print them on the file
-		if (f_force_grad3 != NULL)
+		if (f_force_grad != NULL)
 		{
-			fprintf(f_force_grad3, "%.16le \t %.16le\n", fz_mean, ftheta_mean);
-			fflush(f_force_grad3);
+			fprintf(f_force_grad, "%.16le \t %.16le\n", fz_tg_mean, ftheta_mean);
+			fflush(f_force_grad);
 		}
 	}
 
-	// FIX: Chiudi il file delle forze, dell'energia e dello step del Gradient Flow
-	if (f_force_grad3 != NULL)
+	// FIX: Chiudi il file delle forze del Gradient Flow
+	if (f_force_grad != NULL)
 	{
-		fclose(f_force_grad3);
+		fclose(f_force_grad);
 	}
-	if (f_ener_grad3 != NULL)
+
+	if (f_step_grad23 != NULL)
 	{
-		fclose(f_ener_grad3);
+		fclose(f_step_grad23);
 	}
 }
 
@@ -1311,10 +1043,10 @@ void compute_grad_term(CPN_Conf *conf, CPN_Param const *const param, Geometry co
 	for (i = 0; i < param->d_volume; i++)
 	{
 		double frac = 0.0;
-		frac = creal(conf->z[geo->up[i][1]][N - 1])/ creal(conf->z[i][N - 1]);
+		frac = creal(conf->z[geo->up[i][1]][N - 1]) / creal(conf->z[i][N - 1]);
 		if (f_grad_term != NULL)
 		{
-			fprintf(f_grad_term, "%-8d %-25.16e %-25.16e\n", i, frac, creal(conf->z[i][N-1]));
+			fprintf(f_grad_term, "%-8d %-25.16e %-25.16e\n", i, frac, creal(conf->z[i][N - 1]));
 			fflush(f_grad_term);
 		}
 	}
