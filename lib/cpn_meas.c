@@ -250,7 +250,15 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 			fprintf(f_force_grad, "%.16le \t %.16le\n", fz_tg_mean, ftheta_mean);
 			fflush(f_force_grad);
 		}
+
+		if (f_step_grad23 != NULL)
+		{
+			fprintf(f_step_grad23, "%.16le\n", step);
+			fflush(f_step_grad23);
+		}
 	}
+
+	fix_gauge_conf(aux_conf, param, geo); 
 
 	// FIX: Chiudi il file delle forze del Gradient Flow
 	if (f_force_grad != NULL)
@@ -397,7 +405,7 @@ double energy_density(CPN_Conf const *const conf, Geometry const *const geo, CPN
 
 	e = 2.0 * (c1 * creal(e1) + c2 * creal(e2));
 	e /= (double)(param->d_volume);
-	e = 2.0 * (c1 + c2) - e / 2.0;
+	e = 2.0 * (c1 + c2) - e / 2.0; // The factor of 2 in front of (c1+c2) comes from the sum over the directions of the lattice 
 	return e;
 }
 
@@ -612,7 +620,7 @@ void cooling_improved(CPN_Conf *conf, Geometry const *const geo, CPN_Param const
 void gradient_flow(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const geo, CPN_Param const *const param)
 {
 	int i, mu;
-	double c = 2.0 * (param->d_beta) * N * (param->d_int_step);
+	double c = (param->d_beta) * N * (param->d_int_step);
 	cmplx F_U;
 	cmplx F_z[N] __attribute__((aligned(DOUBLE_ALIGN)));
 
@@ -654,7 +662,7 @@ void gradient_flow_tg(CPN_Conf *conf, CPN_Conf *flow_temp, Geometry const *const
 {
 	int i, mu;
 	double c_theta = 2.0 * (param->d_beta) * N * (param->d_int_step);
-	double c_z = 2.0 * (param->d_beta) * N * (param->d_int_step);
+	double c_z = (param->d_beta) * N * (param->d_int_step);
 	double f_theta;
 	cmplx F_z_tg[N] __attribute__((aligned(DOUBLE_ALIGN)));
 
@@ -694,7 +702,7 @@ int adaptive_step_RK23(CPN_Conf *conf, CPN_Conf *flow_temp1, CPN_Conf *flow_temp
 {
 	int i, mu, j;
 	double c_theta = 2.0 * (param->d_beta) * N * (*step);
-	double c_z = 2.0 * (param->d_beta) * N * (*step);
+	double c_z = (param->d_beta) * N * (*step);
 	double error_abs_z, error_absU, error_abs_in, error_abs = 0.0;
 	double errorU_0, errorU_1;
 	double q, p = 2.0;
