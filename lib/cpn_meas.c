@@ -258,7 +258,7 @@ void perform_measure_gradient_flow(CPN_Conf const *const conf, Geometry const *c
 		}
 	}
 
-	fix_gauge_conf(aux_conf, param, geo); 
+	// fix_gauge_conf(aux_conf, param, geo); 
 
 	// FIX: Chiudi il file delle forze del Gradient Flow
 	if (f_force_grad != NULL)
